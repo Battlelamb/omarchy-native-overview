@@ -5,10 +5,10 @@ The plugin uses Omarchy's normal repository-root manifest and installer contract
 ## Current state
 
 - Local v0.1.0 is installed and remains frozen; do not delete or move its tag or origin.
-- A separate **0.1.1** community release candidate is being prepared.
-- Authenticated publishing account: `Battlelamb`.
-- Proposed public repository: `Battlelamb/omarchy-native-overview`; it did not exist during preflight.
-- No public push, release, listing issue or Reddit post has occurred.
+- Public early pre-release: [v0.1.1](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.1).
+- Publishing account: `Battlelamb`.
+- Public repository: [Battlelamb/omarchy-native-overview](https://github.com/Battlelamb/omarchy-native-overview); owner, visibility, tag target and release assets were read back.
+- [Hosted CI passed on the release-source commit](https://github.com/Battlelamb/omarchy-native-overview/actions/runs/41176718409); private vulnerability reporting is enabled. Marketplace submission and Reddit posting remain separate steps, not claims of maintainer approval.
 
 ## Before the public write
 

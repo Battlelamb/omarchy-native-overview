@@ -12,7 +12,7 @@ A full-shell restart and full removal of that user's installed checkout were not
 
 The initial package carries four window-model checks and five admission/lifecycle checks. They cover malformed/oversized data, markup-shaped titles, hostile addresses, stale client lookup, bounded destinations, admission pending/unknown/failed/abnormal/timeout paths and cancelled probe completion. Lifecycle checks execute the real QML JavaScript entry points with stubbed process/Qt objects; they do not prove signal delivery or rendering. New regression counts, if added, must come from the runner output rather than this historical count.
 
-`bash test.sh` uses a read-only source bind, fake HOME and no network with existing bubblewrap and Node. The proposed GitHub workflow runs the JavaScript checks and release-layout checks directly in an ephemeral runner. **Hosted CI has not run before the repository is published.** It does not render Omarchy or test screencopy/GPU behavior.
+`bash test.sh` uses a read-only source bind, fake HOME and no network with existing bubblewrap and Node. The GitHub workflow runs the JavaScript checks and release-layout checks directly in an ephemeral runner. [Hosted CI passed on the published v0.1.1 source commit](https://github.com/Battlelamb/omarchy-native-overview/actions/runs/41176718409), reporting 5 model, 19 lifecycle and 4 package-layout checks passed. It does not render Omarchy or test screencopy/GPU behavior.
 
 ## 0.1.1 candidate regression checks
 
@@ -20,7 +20,7 @@ The pre-publication review findings now have component regressions: sustained-ev
 
 A separate focused native run passed **34 functional checks and 7 outer isolation checks** using the actual installed Omarchy shell in the existing isolated desktop. It exercised search/preview, real cross-workspace focus, bring-here, closure and reopening. Equivalent genuine focus/move commands returned normal exit zero and `ok`; their effects were read back. This was not intercepted plugin stdout or exact close-versus-ack timing evidence.
 
-**That native receipt predates the final single-line cancellation guard.** The guard has fresh component regression and independent source-review coverage, not a claimed new native GUI run. Source-specific GUI error paths, lock races and other documented gaps remain. Hosted CI has not run yet. Historical 0.1.0 GUI and resource receipts are separate, not extra tests of the changed candidate.
+**That native receipt predates the final single-line cancellation guard.** The guard has fresh component regression and independent source-review coverage, not a claimed new native GUI run. Source-specific GUI error paths, lock races and other documented gaps remain. Hosted CI passed on the published release-source commit; the linked workflow does not test these remaining native GUI cases. Historical 0.1.0 GUI and resource receipts are separate, not extra tests of the changed candidate.
 
 ## Historical real-GUI checks
 

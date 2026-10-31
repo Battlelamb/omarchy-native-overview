@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 — community release candidate (unpublished)
+## 0.1.1 — 2026-10-31 (early community pre-release)
 
 - Fix refresh starvation during continuous compositor events and retain refreshes pending during an active query.
 - Search before the display cap; validate fresh focus/move membership beyond the first 256 windows.
@@ -12,7 +12,7 @@
 - Add a contribution guide, redacted bug-report form and pinned-checkout CI workflow.
 - Preserve the existing v0.1.0 tag and the user's installed build; do not silently repoint that release.
 
-Independent review and public publication remain separate gates. Hosted CI has not run before publication.
+Independent source review approved these changes. Hosted component checks passed on the published release-source commit; this is not a native GUI/security certification.
 
 ## 0.1.0 — 2026-10-31
 

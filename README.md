@@ -4,7 +4,7 @@ Find an open window without hunting through workspaces. Type part of its title o
 
 A community plugin for the existing **Omarchy Quattro shell**, licensed GPL-3.0-only. It does not replace the shell or install a compositor plugin.
 
-**0.1.1 is being prepared as an early community release.** It is not an official Omarchy component or an approved marketplace listing. The proposed repository below is not public yet; the installed local build is 0.1.0.
+**0.1.1 is an early community pre-release.** It is not an official Omarchy component or an approved marketplace listing. [Release and source archive](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.1).
 
 ## What it does
 
@@ -23,9 +23,9 @@ It imports the installed `qs.Ui`, `qs.Commons`, `Quickshell.Hyprland` and `Quick
 
 ## Install
 
-Proposed public repository, pending publication: `https://github.com/Battlelamb/omarchy-native-overview`.
+Public repository: [Battlelamb/omarchy-native-overview](https://github.com/Battlelamb/omarchy-native-overview).
 
-Once that reviewed repository is published:
+Install the reviewed source through Omarchy's plugin manager:
 
 ```bash
 omarchy plugin add https://github.com/Battlelamb/omarchy-native-overview --enable
