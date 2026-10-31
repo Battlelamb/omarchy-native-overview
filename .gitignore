@@ -1,0 +1,3 @@
+# Local verification receipts and built release archives are not plugin source.
+/release-output/
+*.bak-*

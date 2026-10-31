@@ -1,0 +1,8 @@
+{
+  "title": "Windows",
+  "search": "Type a window title or application…",
+  "detail": "%1 · workspace %2",
+  "previewUnavailable": "Preview unavailable",
+  "empty": "No matching windows",
+  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Esc close"
+}
