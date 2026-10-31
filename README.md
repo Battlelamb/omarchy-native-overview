@@ -1,103 +1,282 @@
 # Native Overview
 
-Find an open window without hunting through workspaces. Type part of its title or application name, check the live preview, then switch to it or bring it to where you're working.
+**Find the window. Keep your place.**
 
-A community plugin for the existing **Omarchy Quattro shell**, licensed GPL-3.0-only. It does not replace the shell or install a compositor plugin.
+A keyboard-first window finder for the **Omarchy Quattro shell**. Search your open windows, check the selected window's live preview, then jump to it or bring it to the workspace you're already using.
 
-**0.1.2 is an early community pre-release with hardening fixes.** Upgrade older versions to receive the input-validation, subprocess-lifetime and stale-response fixes. It is not an official Omarchy component or an approved marketplace listing. [Release and source archive](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.2).
+[![Component checks](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml/badge.svg)](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml)
 
-## What it does
+[Quick start](#quick-start) · [Controls](#controls) · [Updates](#updates) · [Compatibility](#compatibility) · [Troubleshooting](#troubleshooting) · [Known limits](#safety-and-known-limits)
 
-- Searches window titles and application names.
-- Shows one live preview for the selected window and a fallback when its source has no content.
-- Focuses a window across workspaces, or brings it to the current workspace with Ctrl+M.
-- Clears the query/window state and destroys the preview component when closed.
+![Native Overview 0.1.2 finding two Foot terminal windows across workspaces, with a live preview of the selected project-notes window and keyboard hints.](docs/images/window-search.png)
 
-The plugin makes no network requests, reads no clipboard content, and installs no package, service or timer. Like other Omarchy plugins, it runs **unsandboxed in your existing shell**. Review source before enabling it.
+*Real 0.1.2 capture in an isolated Hyprland session. The terminals contain sample notes, not private desktop content. [Image provenance](docs/images/README.md).*
 
-## Compatibility
+**Current release: [0.1.2](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.2)** · Early community pre-release · [GPL-3.0-only](LICENSE)
 
-The runtime has been exercised on **Omarchy 4.5.0rc2-1**, **Hyprland 0.56.2-4** with Lua dispatchers, the Omarchy **Quickshell 0.3.2** build, and **Qt 6.12.0**. Compatibility with other versions is not established.
+Built for the shell you already use. No replacement shell, compositor plugin, background daemon or package installer is bundled. This is an independent community project, not an official Omarchy component.
 
-It imports the installed `qs.Ui`, `qs.Commons`, `Quickshell.Hyprland` and `Quickshell.Wayland` APIs. Runtime commands are `/usr/bin/hyprctl`, `/usr/bin/timeout`, `/usr/bin/bash`, `/usr/bin/head`, and `/usr/bin/omarchy-hyprland-session-locked` (whose installed implementation uses `jq`). Fixed positional-argument pipelines cap client stdout before collection at 1,048,576 bytes plus one overflow-detection byte; overflow is rejected, not published. The model independently enforces a true UTF-8 byte limit. Node and bubblewrap are development-test dependencies, not plugin runtime dependencies.
+[Marketplace listing](https://omarchyplugins.com/plugin.html?id=leviathan.native-overview) · [Listing verification record](https://github.com/omacom/omarchy-plugin-marketplace/issues/13452). Automated marketplace verification is snapshot-specific, not a full security review or an endorsement of every later commit.
 
-## Install
+## One search, two ways to continue
 
-Public repository: [Battlelamb/omarchy-native-overview](https://github.com/Battlelamb/omarchy-native-overview).
+The window you need is on workspace 1. You're working on workspace 3.
 
-Install the reviewed source through Omarchy's plugin manager:
+| You want to… | Press | What happens |
+|---|---|---|
+| Go to that window | <kbd>Enter</kbd> | Focus the selected window, following it to its workspace. |
+| Keep working here | <kbd>Ctrl</kbd> + <kbd>M</kbd> | Move the selected window to your current workspace without switching your view elsewhere. |
+
+Search by **window title or application name**, inspect one live preview, and use the same two actions whether the result is nearby or on another workspace. Clicking a result uses the same focus action as Enter.
+
+Ctrl+M moves the window without following it; it does not guarantee keyboard focus on the moved window.
+
+This works with **existing windows**. It does not launch applications, display a workspace thumbnail grid or provide drag-and-drop tiling.
+
+<details>
+<summary>See the same window after “bring here”</summary>
+
+![After Ctrl+M, the project-notes window has moved from workspace 1 to workspace 3; both search results now belong to workspace 3.](docs/images/bring-here.png)
+
+The screenshot was taken after a real Ctrl+M action and reopening the overview. The selected window moved; the viewing workspace stayed at 3.
+
+</details>
+
+## Quick start
+
+Requires the Omarchy Quattro shell and Hyprland's Lua dispatchers. Check the [exercised versions](#compatibility) if you're on a different release. This is not a standalone Quickshell configuration.
+
+### 1. Install
 
 ```bash
 omarchy plugin add https://github.com/Battlelamb/omarchy-native-overview --enable
 ```
 
-This uses Omarchy's normal plugin manager. It does not add a shortcut or overwrite your configuration. Installation and updates follow the repository's current default branch; a marketplace listing does not pin mutable HEAD to a reviewed version. Review changes before updating.
+Use Omarchy's normal confirmation and review the source before enabling. Like other shell plugins, this code runs with your user permissions inside the existing shell.
 
-## Update
-
-For an installation from the public GitHub repository, review and apply the patch with:
-
-```bash
-omarchy plugin update leviathan.native-overview
-```
-
-Back up any local modifications first. A private/local frozen git origin does not follow GitHub updates; replace that installation deliberately with a backed-up checkout from the public repository rather than moving old tags.
-
-## Open it
+### 2. Open
 
 ```bash
 omarchy-shell shell toggle leviathan.native-overview '{}'
 ```
 
-If Super+D is free on your system, back up `~/.config/hypr/bindings.lua` and add:
+Start typing a title or application name. Select a result with the arrow keys, then use Enter or Ctrl+M. Escape closes the overview.
+
+### 3. Add a shortcut, if you want one
+
+The installer **does not bind keys automatically**. Existing users can keep their current Native Overview binding.
+
+<details>
+<summary>Optional Super+D binding for Omarchy's Lua configuration</summary>
+
+Only use Super+D if it is free. Do not add a second copy if you've already configured it.
+
+Back up your existing file first:
+
+```bash
+cp -p "$HOME/.config/hypr/bindings.lua" \
+  "$HOME/.config/hypr/bindings.lua.bak-native-overview-$(date +%Y%m%d-%H%M%S)"
+```
+
+Add this line to `~/.config/hypr/bindings.lua`:
 
 ```lua
 o.bind("SUPER + D", "Native Overview", "omarchy-shell shell toggle leviathan.native-overview '{}'")
 ```
 
-Apply with `hyprctl reload` and check `hyprctl configerrors`. The shortcut is opt-in; the plugin never writes bindings on load.
+Apply and check for configuration errors:
 
-| Key/action | Result |
+```bash
+hyprctl reload
+hyprctl configerrors
+```
+
+Choose a different unused combination if Super+D already belongs to another action. The plugin itself never edits your keybindings.
+
+</details>
+
+## Controls
+
+These controls apply while the overview has keyboard focus.
+
+| Key or action | Result |
 |---|---|
-| Type | Search titles and applications |
-| Up / Down | Select a result |
-| Enter or click | Focus that window |
-| Ctrl+M | Bring it to the current workspace without changing the viewing workspace |
-| Backspace | Edit search |
-| Escape or click outside the card | Close |
+| Type | Filter titles and application names, case-insensitively. |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Select a result. |
+| <kbd>Enter</kbd> or click a result | Focus the selected window. |
+| <kbd>Ctrl</kbd> + <kbd>M</kbd> | Bring the selected window to the current workspace. |
+| <kbd>Backspace</kbd> | Edit the search. |
+| <kbd>Esc</kbd> or click outside the card | Close the overview. |
 
-Bring-here destinations are normal workspaces 1–9999, not special workspaces. This is a window finder, not a workspace thumbnail grid or drag-and-drop overview.
+Search is substring matching, not fuzzy matching. Closing clears the query/window state and releases the preview component. If an action fails, the overview keeps your search and shows retry feedback rather than claiming success.
 
-## Disable or remove
+## Updates
+
+For installations from the public GitHub repository:
+
+```bash
+omarchy plugin update leviathan.native-overview
+```
+
+Back up local modifications before updating. **0.1.2 is recommended over 0.1.0 and 0.1.1:** it fixes malformed-input handling, retired responses affecting later sessions, lock-check startup recovery and subprocess lifetime/output bounds.
+
+Installation and updates follow the repository's current default branch. A marketplace entry does not pin mutable HEAD to an immutable reviewed release.
+
+<details>
+<summary>Using an older private or local frozen checkout?</summary>
+
+A checkout whose origin is a local frozen repository does not follow GitHub releases. Preserve that checkout and your configuration, then deliberately replace it with an installation from the public repository. Do not move old tags or discard local work to make an update appear successful.
+
+</details>
+
+<details>
+<summary>Disable or remove the plugin</summary>
+
+Hide and disable without deleting your checkout:
 
 ```bash
 omarchy-shell shell hide leviathan.native-overview
 omarchy plugin disable leviathan.native-overview
-# When you intend to delete the installed checkout:
+```
+
+When you intentionally want to delete the installed checkout, save local changes first, then run:
+
+```bash
 omarchy plugin remove leviathan.native-overview --yes
 ```
 
-Remove the shortcut line yourself if you added it. No custom daemon or system package needs removal. Keep local modifications elsewhere before deleting an installed checkout.
+Remove your optional shortcut separately. There is no custom daemon, system package or service to uninstall.
 
-## Known limitations
+</details>
 
-- Search uses key-event filtering, not a full text field with caret/IME support. Accessibility and complete mouse/arrow/theme coverage remain incomplete.
-- Lock admission fails closed when Omarchy's helper is locked, unknown, missing or unsuccessful, including a process-start failure. While open, checks occur every **250 ms**. IPC requests have an inner **2-second deadline plus 1-second KILL grace**, with an independent outer **4-second / 2-second-grace fail-safe**; the inner deadline survives destruction of its QML owner. This is not instantaneous or a zero-frame privacy guarantee. The compositor's real lock is the security boundary.
-- Target-output loss and source disappearance were exercised. Two usable-display rendering, physical unplug, GPU/compositor capture denial and retained-frame stalls have not been fully verified.
-- A client lookup occurs before focus/move, but closes/address reuse or lock transitions after that lookup remain timing risks.
-- Whole-shell resource gates have failed. The older descriptor spike was attributed to Tailscale polling and an older Tailscale-disabled control passed. In the hardening run, excess descriptors mapped to Tailscale and GPU telemetry polls, then returned to baseline. These are attributions, not green gates or proof of leak-free, isolated plugin cost.
+## Compatibility
 
-Details and measured limits are in [docs/VALIDATION.md](docs/VALIDATION.md). Do not interpret the version number, CI or a marketplace listing as a security or performance certification.
+These versions were exercised for 0.1.2. Other combinations are **not established as compatible**.
 
-## Development and licence
+| Component | Exercised version |
+|---|---|
+| Omarchy | 4.5.0rc2-1, Quattro shell |
+| Hyprland | 0.56.2-4, Lua dispatchers |
+| Quickshell | Omarchy build 0.3.2 |
+| Qt | 6.12.0 |
+
+The plugin imports the installed `qs.Ui`, `qs.Commons`, `Quickshell.Hyprland` and `Quickshell.Wayland` APIs. Runtime commands are `hyprctl`, GNU `timeout`, `bash`, `head` and `omarchy-hyprland-session-locked`; the installed lock helper uses `jq`. These are existing runtime facilities, not packages the plugin installs for you.
+
+## Safety and known limits
+
+**The plugin runs unsandboxed inside your shell. It is not a lock screen or an authentication boundary.**
+
+| Access | Scope |
+|---|---|
+| Window metadata | Titles, applications, addresses, workspaces and outputs, used for search and validated actions. |
+| Selected-window screencopy | Only the selected preview while the overview is open. |
+| Focus and move dispatches | Explicit user actions, after a fresh client lookup. |
+| Compositor lock helper | Checked before opening and sampled every 250 ms while open. Unknown state fails closed. |
+
+The plugin supplies **no network requests, telemetry, clipboard reader, persistent private-window database or privileged helper**. The shell and other enabled plugins may have broader capabilities. See [SECURITY.md](SECURITY.md) for the trust boundary and private vulnerability-reporting route.
+
+Important limits:
+
+- Lock sampling is not instantaneous and is not a zero-frame privacy guarantee. A close, address reuse or lock transition after verification remains a timing risk.
+- Bring-here destinations are normal workspaces **1–9999**, not special workspaces.
+- Input is bounded to **1 MiB of UTF-8 client JSON** and at most **256 matching results** are displayed. This is not an unbounded window index.
+- Text entry uses key-event filtering, not a complete text field. IME, accessibility and exhaustive mouse/theme coverage remain incomplete.
+- Usable second-display rendering, physical unplug, GPU/compositor capture denial and retained-frame stalls have not been fully verified.
+- **The whole-shell resource gate remains failed.** Observed extra descriptors mapped to Tailscale/GPU polling and returned to baseline. That attribution is not a green gate, an isolated plugin-cost measurement or a leak-free guarantee.
+
+[Full validation record and remaining coverage →](docs/VALIDATION.md)
+
+## Troubleshooting
+
+<details>
+<summary>Installed, but nothing opens</summary>
+
+Check the [version requirements](#compatibility), make sure the overlay is enabled, then try the explicit command:
+
+```bash
+omarchy plugin enable leviathan.native-overview
+omarchy-shell shell toggle leviathan.native-overview '{}'
+```
+
+The overview deliberately stays closed if the compositor lock helper reports locked, unknown or unsuccessful. Do not bypass that check. This plugin must be loaded by Omarchy's shell, not run as a second standalone Quickshell instance.
+
+</details>
+
+<details>
+<summary>The preview says “Preview unavailable”</summary>
+
+The selected window may have closed, or the compositor has not supplied usable preview content. Select another result or reopen the overview. The fallback is intentional; it is not evidence that every GPU/capture-denial case is supported.
+
+</details>
+
+<details>
+<summary>A window closed, moved, or an action failed</summary>
+
+The current client list is re-read before dispatch. A disappeared selection is refreshed away. A failed command or acknowledgement leaves the overview open with retry feedback and preserves your search. Press Enter to retry an available selection or Escape to close.
+
+</details>
+
+<details>
+<summary>An update reports “omarchy-shell is not responding”</summary>
+
+A rescan can outlast the CLI's default two-second IPC window in a long-running session. A failed reply does not prove that the filesystem update was rolled back: inspect the installed checkout and plugin state before repeating a potentially completed operation.
+
+For a planned update, the existing CLI setting can give that invocation a bounded ten-second IPC window:
+
+```bash
+OMARCHY_SHELL_IPC_TIMEOUT=10s omarchy plugin update leviathan.native-overview
+```
+
+Keep errors visible. Do not restart the long-lived, lock-hosting shell just to hide an IPC error. Preserve local work and backups before recovery.
+
+</details>
+
+## Validation and development
+
+[Component CI](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml) checks JavaScript behavior and package layout. It does **not** render Omarchy or certify GPU behavior.
+
+<details>
+<summary>0.1.2 execution summary and local development commands</summary>
+
+| Check | Recorded result |
+|---|---|
+| Component suites | 10 model + 22 lifecycle checks passed. |
+| Native offscreen Qt/Quickshell | 18 checks passed. |
+| Visible nested desktop | 38 passed, 1 resource-gate failure, retained as failed. |
+| Preview soak | 300 paced cycles with balanced preview destruction. |
+| Upgrade and rollback | 12 checks passed in the isolated upgrade session. |
+
+These are scoped observations, not a blanket security/performance certification. The native checks were run locally, separately from hosted component CI. [Detailed evidence and limits](docs/VALIDATION.md).
+
+Development requires the existing Node, Python 3, bubblewrap and installed Omarchy/Quickshell environment:
 
 ```bash
 omarchy plugin validate .
 bash test.sh
-bash tests/native-io.test.sh  # local Qt/offscreen release gate; needs installed qs
+bash tests/native-io.test.sh
 python3 scripts/check-package.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CHANGELOG.md](CHANGELOG.md) and [docs/RELEASING.md](docs/RELEASING.md).
+The native runner uses an offline bubblewrap sandbox and Qt's offscreen/software path. It is not a substitute for compositor integration tests.
 
-The selected-preview lifecycle fragment adapts end-4/dots-hyprland at `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`. Attribution and source paths are in [NOTICE.md](NOTICE.md); the full GPL-3.0 licence is in [LICENSE](LICENSE). Omarchy components are imported rather than vendored.
+</details>
+
+### Source map
+
+| File | Responsibility |
+|---|---|
+| [`Overview.qml`](Overview.qml) | Search UI, selection, refresh scheduling and action lifecycle. |
+| [`WindowPreview.qml`](WindowPreview.qml) | Selected-window capture and unavailable-content fallback. |
+| [`BoundedProcess.qml`](BoundedProcess.qml) | Per-request ownership, raw-output caps and process supervision. |
+| [`WindowModel.js`](WindowModel.js) | Strict input validation, filtering and bounded focus/move requests. |
+| [`tests/`](tests/) | Component regressions and native subprocess checks. |
+
+Small, focused fixes and compatibility reports are welcome. Include versions and a minimal reproduction, not private window titles, unrelated logs or desktop data. Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing larger changes.
+
+## Credits and licence
+
+The preview lifecycle adapts a narrow `ScreencopyView` fragment from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) at commit `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`. Full source paths and attribution are retained in [NOTICE.md](NOTICE.md). This is not a port of the entire ii shell.
+
+Omarchy's components are imported, not vendored or modified. Native Overview is distributed under **[GPL-3.0-only](LICENSE)**.
+
+[Release notes](CHANGELOG.md) · [Report a public bug](https://github.com/Battlelamb/omarchy-native-overview/issues/new/choose) · [Report a security issue privately](https://github.com/Battlelamb/omarchy-native-overview/security/advisories/new)
