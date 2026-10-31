@@ -1,0 +1,22 @@
+name: Component checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Window model
+        run: node tests/model.test.cjs
+      - name: Admission lifecycle
+        run: node tests/lifecycle.test.cjs
+      - name: Package layout and notices
+        run: python3 scripts/check-package.py

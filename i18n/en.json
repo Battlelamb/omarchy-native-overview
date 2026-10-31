@@ -4,5 +4,7 @@
   "detail": "%1 · workspace %2",
   "previewUnavailable": "Preview unavailable",
   "empty": "No matching windows",
-  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Esc close"
+  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Esc close",
+  "actionFailed": "Window action failed. Press Enter to retry or Esc to close.",
+  "actionStartFailed": "Could not start hyprctl. Check its installation, then retry."
 }

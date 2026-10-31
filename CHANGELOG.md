@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.1 — community release candidate (unpublished)
+
+- Fix refresh starvation during continuous compositor events and retain refreshes pending during an active query.
+- Search before the display cap; validate fresh focus/move membership beyond the first 256 windows.
+- Keep the overview open on failed action start/exit/acknowledgement and show translated failure feedback.
+- Ignore cancelled verification callbacks after dismissal/reopening, with a regression for normal and failed late completions.
+- Add component regressions for these paths (24 component checks pass; not a substitute for native GUI execution).
+- Correct the pinned donor source path in NOTICE.md.
+- Prepare public install/compatibility documentation and separate validation limits.
+- Add a contribution guide, redacted bug-report form and pinned-checkout CI workflow.
+- Preserve the existing v0.1.0 tag and the user's installed build; do not silently repoint that release.
+
+Independent review and public publication remain separate gates. Hosted CI has not run before publication.
+
 ## 0.1.0 — 2026-10-31
 
 Initial standalone Omarchy community-plugin package.

@@ -1,28 +1,49 @@
-# Public release checklist
+# Community release checklist
 
-The local source is structured for Omarchy's standard plugin installer: manifest and all entry points at the repository root. Packaging and a local installation do **not** constitute marketplace approval.
+The plugin uses Omarchy's normal repository-root manifest and installer contract. Packaging, local use, public release and marketplace approval are different states.
 
-## Before publication
+## Current state
 
-1. Select the public repository/account and a private security contact with the owner. No guessed GitHub identity, repository URL or contact is included.
-2. Review README limitations and the GPL-3.0-only donor notices. Retain the full corresponding source and LICENSE in every distributed source archive. Do not claim the original whole-shell resource gate passed.
-3. Run `omarchy plugin validate .`, `bash test.sh` and `python3 scripts/check-package.py` on the exact release tree. Keep real installation receipts separately; do not publish private window metadata, local logs, credentials or real desktop screenshots.
-4. Exercise install, disable/re-enable, open/close and shortcut removal. A full-shell restart, usable second-output rendering, accessibility, race and longer resource coverage are still outstanding unless a later receipt documents them.
-5. Choose whether the documented limitations are appropriate for a clearly labelled initial release. This local package uses version 0.1.0, not a stable/official certification.
-6. After explicit publication approval, publish the reviewed repository/commit and release source archive, then replace the README's `<repository-url>` placeholder with the real URL. Local `v0.1.0` tagging and archives do not push anything.
-7. Submit through https://plugins.omarchy.org/publish.html using the real public GitHub repository, category and tags. Suggested category: Productivity; tags: windows, launcher, overview, workspace. Maintainers decide acceptance; never describe a prepared submission as an approved listing.
+- Local v0.1.0 is installed and remains frozen; do not delete or move its tag or origin.
+- A separate **0.1.1** community release candidate is being prepared.
+- Authenticated publishing account: `Battlelamb`.
+- Proposed public repository: `Battlelamb/omarchy-native-overview`; it did not exist during preflight.
+- No public push, release, listing issue or Reddit post has occurred.
 
-Current marketplace prerequisites were checked against https://plugins.omarchy.org/publish.html and https://plugins.omarchy.org/develop.html: root manifest, public GitHub repository, README/licence, safe install/removal; preview image optional. Requirements may change, so recheck before submitting.
+## Before the public write
 
-## Local release commands
+1. Resolve concrete independent-review findings. Preserve donor attribution and the full GPL licence. Do not claim the original whole-shell resource gate passed or imply an official Omarchy affiliation.
+2. Run `omarchy plugin validate .`, `bash test.sh`, `python3 scripts/check-package.py`, and the component commands used by `.github/workflows/checks.yml` on the exact tree. A prepared workflow is not hosted CI evidence.
+3. Review the public file list and git identity. Exclude backups, local receipts, process traces and real desktop screenshots. No test fixture/observer is part of runtime installation.
+4. Show the owner the concrete proposed repository, early-release version, marketplace submission and Reddit title/body. Obtain approval before public creation/push/submission/posting. An owner-approved initial community release can document remaining coverage; do not quietly present it as fully certified.
+
+## After publication is authorized
+
+1. Create the public repository with explicit settings and publish the reviewed source; read back its owner/name, visibility, default branch and exact commit. Replace the prepared README status with the real publication state before the reviewed public push. Keep the installed local frozen origin unchanged unless a separate update is intended.
+2. Enable owner-controlled GitHub private vulnerability reporting and verify the feature before advertising it. Do not invent an email/contact.
+3. Run/read the hosted checks. Do not claim CI green until GitHub reports it on the exact source commit. Component CI does not render Omarchy or test a GPU.
+4. Create the new `v0.1.1` tag/release and source archive for the reviewed commit. Read back tag target, release state, asset hashes/size and public URLs. Never repoint v0.1.0.
+5. Submit through https://plugins.omarchy.org/publish.html. Actual issue-form choices: category **Desktop**; three allowed tags **Hyprland, Launcher, Quickshell**. The repository-public checklist item stays unchecked until its public URL has been verified. Submission is not maintainer approval.
+6. Recheck r/omarchy's rules and posting account. Its observed self-promotion rule asks for **I Made a Thing** flair, useful context and moderate posting. Use the approved draft with a verified release URL and no claimed marketplace approval. Read back the exact post URL/title/body/community/flair after publishing. Do not repeat promotional posts or crosspost indiscriminately.
+
+## Local candidate checks
 
 ```bash
 omarchy plugin validate .
 bash test.sh
 python3 scripts/check-package.py
-# Only after changes are reviewed and committed:
-git archive --format=tar --prefix=omarchy-native-overview-0.1.0/ HEAD | gzip -n > omarchy-native-overview-0.1.0.tar.gz
-sha256sum omarchy-native-overview-0.1.0.tar.gz
+# A source archive after the final reviewed commit:
+git archive --format=tar --prefix=omarchy-native-overview-0.1.1/ HEAD | gzip -n > omarchy-native-overview-0.1.1.tar.gz
+sha256sum omarchy-native-overview-0.1.1.tar.gz
 ```
 
-Never archive `.git`, config backups, benchmark fixtures, process traces or private installation receipts into the public release. This repository intentionally contains only the runtime plugin, component tests and release documentation/tooling. Detailed prototype receipts remain outside this repository.
+Use a separate ignored output directory for assets. Do not archive `.git`, configuration backups, benchmark fixtures, raw process traces or private installation receipts. Keep full corresponding source and GPL notices with any distributed source archive.
+
+## Sources checked
+
+- https://plugins.omarchy.org/publish.html
+- https://plugins.omarchy.org/develop.html
+- https://github.com/omacom/omarchy-plugin-marketplace/blob/6e577c5a3b38a7e4bc01817814f0f28b4e5d33f0/.github/ISSUE_TEMPLATE/submit-plugin.yml
+- https://www.reddit.com/r/omarchy/ (live public sidebar rules)
+
+These requirements were read on 2026-10-31. Recheck at submission. A preview image is optional; do not substitute an invented screenshot or an unlabeled synthetic fixture for a real-app demo.

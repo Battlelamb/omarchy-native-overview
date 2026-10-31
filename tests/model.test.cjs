@@ -44,4 +44,18 @@ test('bring-to-workspace accepts only a fresh window and a bounded integer desti
   }
   assert.equal(model.moveRequest('0xabc', 3, JSON.stringify([windows[1]])), '');
 });
+test('search and actions reach valid clients beyond the display cap', () => {
+  const clients = Array.from({length:257}, (_, i) => ({...windows[0],
+    address:'0x' + (i + 1).toString(16), title:i === 256 ? 'Unique late match' : 'Ordinary'}));
+  const raw = JSON.stringify(clients);
+  assert.equal(model.rows(raw, '').length, 256, 'display remains bounded');
+  assert.equal(model.rows(raw, 'unique late')[0]?.address, clients[256].address);
+  assert.equal(model.focusRequest(clients[256].address, raw), 'hl.dsp.focus({ window = "address:0x101" })');
+  assert.equal(model.moveRequest(clients[256].address, 3, raw), 'hl.dsp.window.move({ workspace = 3, follow = false, window = "address:0x101" })');
+  clients[256].mapped = false;
+  assert.equal(model.focusRequest(clients[256].address, JSON.stringify(clients)), '');
+  assert.equal(model.moveRequest(clients[256].address, 3, JSON.stringify(clients)), '');
+  assert.equal(model.moveRequest('0x101); bad()', 3, raw), '');
+  assert.equal(model.moveRequest('0xffff', 3, raw), '');
+});
 console.log(`RESULT ${passed} passed`);

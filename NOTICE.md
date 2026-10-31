@@ -4,7 +4,7 @@ Native Overview is distributed under GPL-3.0-only. See LICENSE for the full lice
 
 ## Selected-window preview
 
-`WindowPreview.qml` adapts the lifecycle-bound `ScreencopyView` fragment from end-4/dots-hyprland, `modules/ii/overview/OverviewWindow.qml` lines 93–97 at commit `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`.
+`WindowPreview.qml` adapts the lifecycle-bound `ScreencopyView` fragment from end-4/dots-hyprland, `dots/.config/quickshell/ii/modules/ii/overview/OverviewWindow.qml` lines 93–97 at commit `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`.
 
 Source: https://github.com/end-4/dots-hyprland/tree/2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8
 

@@ -20,6 +20,10 @@ Item {
     property int selected: 0
     property string requestedAddress: ""
     property int requestedWorkspace: 0
+    property bool refreshPending: false
+    property bool actionPending: false
+    property string actionError: ""
+    readonly property bool actionBusy: requestedAddress !== "" || verify.running || focusAction.running || actionPending
     readonly property var matches: WindowModel.rows(raw, query)
     onMatchesChanged: selected = Math.max(0, Math.min(selected, matches.length - 1))
 
@@ -33,7 +37,8 @@ Item {
     function close() {
         opening = false;
         opened = false; raw = "[]"; query = ""; requestedAddress = ""; requestedWorkspace = 0;
-        refresh.running = false; verify.running = false; updateTimer.stop();
+        actionPending = false; actionError = "";
+        refreshPending = false; updateTimer.stop(); refresh.running = false; verify.running = false;
     }
     function dismiss() {
         close();
@@ -41,11 +46,29 @@ Item {
     }
     function toggle() { if (opened) dismiss(); else open("{}"); }
     function activate(index, bringHere) {
-        if (!opened || index < 0 || index >= matches.length || verify.running || focusAction.running) return;
+        if (!opened || opening || lockProbe.running || index < 0 || index >= matches.length || actionBusy) return;
         if (bringHere && (!Hyprland.focusedWorkspace || Hyprland.focusedWorkspace.id < 1)) return;
         requestedAddress = matches[index].address;
         requestedWorkspace = bringHere ? Hyprland.focusedWorkspace.id : 0;
+        actionError = "";
         verify.running = true;
+    }
+    function queueRefresh() {
+        if (!opened) return;
+        refreshPending = true;
+        if (!updateTimer.running) updateTimer.start();
+    }
+    function runRefresh() {
+        if (!opened || !refreshPending || updateTimer.running || refresh.running) return;
+        refreshPending = false;
+        refresh.running = true;
+    }
+    function finishAction(errorKey) {
+        if (!actionPending) return;
+        actionPending = false;
+        if (!opened) return;
+        if (errorKey) actionError = errorKey;
+        else dismiss();
     }
 
     // shortcut: compositor lock state is sampled while open; replace polling if a lock event API appears.
@@ -67,34 +90,46 @@ Item {
         }
     }
     Commons.Translations { id: strings; directory: Qt.resolvedUrl("i18n") }
-    Timer { id: updateTimer; interval: 80; onTriggered: if (root.opened && !refresh.running) refresh.running = true }
+    Timer { id: updateTimer; interval: 80; onTriggered: root.runRefresh() }
     Connections {
         target: Hyprland
-        function onRawEvent(event) { if (root.opened) updateTimer.restart(); }
+        function onRawEvent(event) { root.queueRefresh(); }
     }
     Process {
         id: refresh
         command: ["/usr/bin/hyprctl", "clients", "-j"]
         stdout: StdioCollector { onStreamFinished: if (root.opened) root.raw = text }
         onExited: (code, status) => { if (code !== 0 && root.opened) root.raw = "[]"; }
+        onRunningChanged: if (!running) root.runRefresh()
     }
     Process {
         id: verify
         command: ["/usr/bin/hyprctl", "clients", "-j"]
         stdout: StdioCollector { id: verifiedClients }
         onExited: (code, status) => {
-            if (!root.opened || code !== 0) return;
+            if (!root.opened || !root.requestedAddress) return;
+            if (code !== 0 || status !== 0 || root.opening || lockProbe.running) {
+                root.requestedAddress = ""; root.actionError = "actionFailed"; return;
+            }
             var request = root.requestedWorkspace > 0
                 ? WindowModel.moveRequest(root.requestedAddress, root.requestedWorkspace, verifiedClients.text)
                 : WindowModel.focusRequest(root.requestedAddress, verifiedClients.text);
             root.requestedAddress = "";
             if (!request) { refresh.running = true; return; }
-            root.dismiss();
+            root.actionPending = true;
             focusAction.command = ["/usr/bin/hyprctl", "dispatch", request];
             focusAction.running = true;
         }
+        onRunningChanged: if (!verify.running && root.opened && root.requestedAddress) { root.requestedAddress = ""; root.actionError = "actionStartFailed"; }
     }
-    Process { id: focusAction }
+    Process {
+        id: focusAction
+        stdout: StdioCollector { id: actionReply }
+        // shortcut: accept only the explicit ok acknowledgement; revisit if the dispatcher protocol changes.
+        onExited: (code, status) => { root.finishAction(code === 0 && status === 0 && actionReply.text.trim() === "ok" ? "" : "actionFailed"); }
+        // FailedToStart emits runningChanged without exited in Quickshell.Io.Process.
+        onRunningChanged: if (!focusAction.running && root.actionPending) root.finishAction("actionStartFailed")
+    }
 
     OverlayWindow {
         id: panel
@@ -217,7 +252,8 @@ Item {
                 Text {
                     width: parent.width
                     textFormat: Text.PlainText
-                    text: strings.t("help")
+                    text: root.actionError ? strings.t(root.actionError) : strings.t("help")
+                    elide: Text.ElideRight
                     color: Commons.Color.menu.text
                     opacity: 0.6
                     font.family: Style.font.menuFamily

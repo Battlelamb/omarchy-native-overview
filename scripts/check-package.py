@@ -8,13 +8,14 @@ root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / 'manifest.json').read_text())
 assert manifest['schemaVersion'] == 1
 assert manifest['id'] == 'leviathan.native-overview'
-assert manifest['version'] == '0.1.0'
+assert manifest['version'] == '0.1.1'
 assert manifest['license'] == 'GPL-3.0-only'
 assert manifest['kinds'] == ['overlay']
 assert manifest['entryPoints'] == {'overlay': 'Overview.qml'}
 print('PASS release manifest identity/version/licence/entry point')
 for name in ['Overview.qml', 'WindowPreview.qml', 'WindowModel.js', 'LICENSE', 'NOTICE.md',
-             'README.md', 'SECURITY.md', 'CHANGELOG.md', 'docs/RELEASING.md', 'test.sh',
+             'README.md', 'SECURITY.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'docs/RELEASING.md',
+             'docs/VALIDATION.md', '.github/workflows/checks.yml', '.github/ISSUE_TEMPLATE/bug-report.yml', 'test.sh',
              'tests/model.test.cjs', 'tests/lifecycle.test.cjs']:
     assert (root / name).is_file(), name
 assert 'GNU GENERAL PUBLIC LICENSE' in (root / 'LICENSE').read_text()

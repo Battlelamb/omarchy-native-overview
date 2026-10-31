@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible Native Overview problem without private desktop data.
+body:
+  - type: markdown
+    attributes:
+      value: "Do not attach credentials, private window titles, full environment dumps or unredacted desktop screenshots. See SECURITY.md for sensitive reports."
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: Plugin, Omarchy, Hyprland and Quickshell versions; display scaling if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Include only relevant, redacted error lines.
+    validations:
+      required: true
