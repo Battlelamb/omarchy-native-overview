@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "leviathan.native-overview",
   "name": "Native Overview",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Ömer Eren",
   "license": "GPL-3.0-only",
   "description": "Find windows, preview the selected window, focus it or bring it to the current workspace.",

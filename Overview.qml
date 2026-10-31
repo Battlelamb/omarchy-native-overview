@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.Ui
@@ -29,16 +28,15 @@ Item {
 
     function open(payloadJson) {
         if (opened || opening) return;
-        // A cancelled probe must finish before another admission can use its result.
-        if (lockProbe.running) { dismiss(); return; }
         query = ""; selected = 0; raw = "[]"; opening = true;
-        lockProbe.running = true;
+        lockProbe.start();
     }
     function close() {
         opening = false;
         opened = false; raw = "[]"; query = ""; requestedAddress = ""; requestedWorkspace = 0;
         actionPending = false; actionError = "";
-        refreshPending = false; updateTimer.stop(); refresh.running = false; verify.running = false;
+        refreshPending = false; updateTimer.stop();
+        lockProbe.cancel(); refresh.cancel(); verify.cancel(); focusAction.cancel();
     }
     function dismiss() {
         close();
@@ -51,7 +49,7 @@ Item {
         requestedAddress = matches[index].address;
         requestedWorkspace = bringHere ? Hyprland.focusedWorkspace.id : 0;
         actionError = "";
-        verify.running = true;
+        verify.start();
     }
     function queueRefresh() {
         if (!opened) return;
@@ -61,7 +59,7 @@ Item {
     function runRefresh() {
         if (!opened || !refreshPending || updateTimer.running || refresh.running) return;
         refreshPending = false;
-        refresh.running = true;
+        refresh.start();
     }
     function finishAction(errorKey) {
         if (!actionPending) return;
@@ -74,17 +72,18 @@ Item {
     // shortcut: compositor lock state is sampled while open; replace polling if a lock event API appears.
     Timer {
         interval: 250; repeat: true; running: root.opened
-        onTriggered: if (!lockProbe.running) lockProbe.running = true
+        onTriggered: if (!lockProbe.running) lockProbe.start()
     }
-    Process {
+    BoundedProcess {
         id: lockProbe
-        command: ["/usr/bin/timeout", "--kill-after=1", "2", "/usr/bin/omarchy-hyprland-session-locked"]
-        onExited: (code, status) => {
+        command: ["/usr/bin/omarchy-hyprland-session-locked"]
+        byteLimit: 1024
+        onCompleted: (code, status, text, error) => {
             if (!root.opening && !root.opened) return;
-            if (code !== 1 || status !== 0) { root.dismiss(); return; }
+            if (error || code !== 1 || status !== 0) { root.dismiss(); return; }
             if (root.opening) {
                 root.opening = false; root.opened = true;
-                refresh.running = true;
+                refresh.start();
                 Qt.callLater(function() { if (root.opened) keyboard.forceActiveFocus(); });
             }
         }
@@ -95,40 +94,42 @@ Item {
         target: Hyprland
         function onRawEvent(event) { root.queueRefresh(); }
     }
-    Process {
+    BoundedProcess {
         id: refresh
         command: ["/usr/bin/hyprctl", "clients", "-j"]
-        stdout: StdioCollector { onStreamFinished: if (root.opened) root.raw = text }
-        onExited: (code, status) => { if (code !== 0 && root.opened) root.raw = "[]"; }
-        onRunningChanged: if (!running) root.runRefresh()
+        onCompleted: (code, status, text, error) => {
+            if (!root.opened) return;
+            root.raw = !error && code === 0 && status === 0 ? text : "[]";
+            root.runRefresh();
+        }
     }
-    Process {
+    BoundedProcess {
         id: verify
         command: ["/usr/bin/hyprctl", "clients", "-j"]
-        stdout: StdioCollector { id: verifiedClients }
-        onExited: (code, status) => {
+        onCompleted: (code, status, text, error) => {
             if (!root.opened || !root.requestedAddress) return;
-            if (code !== 0 || status !== 0 || root.opening || lockProbe.running) {
-                root.requestedAddress = ""; root.actionError = "actionFailed"; return;
+            if (error || code !== 0 || status !== 0 || root.opening || lockProbe.running) {
+                root.requestedAddress = ""; root.requestedWorkspace = 0;
+                root.actionError = error === "startFailed" ? "actionStartFailed" : "actionFailed"; return;
             }
             var request = root.requestedWorkspace > 0
-                ? WindowModel.moveRequest(root.requestedAddress, root.requestedWorkspace, verifiedClients.text)
-                : WindowModel.focusRequest(root.requestedAddress, verifiedClients.text);
-            root.requestedAddress = "";
-            if (!request) { refresh.running = true; return; }
+                ? WindowModel.moveRequest(root.requestedAddress, root.requestedWorkspace, text)
+                : WindowModel.focusRequest(root.requestedAddress, text);
+            root.requestedAddress = ""; root.requestedWorkspace = 0;
+            if (!request) { refresh.start(); return; }
             root.actionPending = true;
             focusAction.command = ["/usr/bin/hyprctl", "dispatch", request];
-            focusAction.running = true;
+            focusAction.start();
         }
-        onRunningChanged: if (!verify.running && root.opened && root.requestedAddress) { root.requestedAddress = ""; root.actionError = "actionStartFailed"; }
     }
-    Process {
+    BoundedProcess {
         id: focusAction
-        stdout: StdioCollector { id: actionReply }
+        byteLimit: 4096
         // shortcut: accept only the explicit ok acknowledgement; revisit if the dispatcher protocol changes.
-        onExited: (code, status) => { root.finishAction(code === 0 && status === 0 && actionReply.text.trim() === "ok" ? "" : "actionFailed"); }
-        // FailedToStart emits runningChanged without exited in Quickshell.Io.Process.
-        onRunningChanged: if (!focusAction.running && root.actionPending) root.finishAction("actionStartFailed")
+        onCompleted: (code, status, text, error) => {
+            root.finishAction(error === "startFailed" ? "actionStartFailed"
+                : !error && code === 0 && status === 0 && text.trim() === "ok" ? "" : "actionFailed");
+        }
     }
 
     OverlayWindow {

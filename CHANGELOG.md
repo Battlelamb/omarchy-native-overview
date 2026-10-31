@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2 — 2026-10-31 (hardening patch)
+
+- Reject non-string window addresses without coercion or exceptions.
+- Enforce the client-input limit in UTF-8 bytes, including CJK, emoji and unpaired-surrogate boundaries.
+- Give every lock, refresh, verification and dispatch request distinct process/collector ownership; retired runs cannot complete newer requests.
+- Recover fail-closed from lock-process start failure instead of leaving admission stuck.
+- Bound collected stdout upstream, with one overflow sentinel byte and explicit rejection, and enforce subprocess deadlines through independent watchdogs.
+- Preserve the command deadline when a QML request owner is destroyed; retain literal positional arguments rather than interpolating them into shell code.
+- Add 25,000 seeded schema cases, byte-limit controls, lifecycle regressions and native offscreen I/O/owner-teardown tests.
+
+Full validation and remaining limitations are recorded in docs/VALIDATION.md. The original tags are preserved. This patch fixes the identified plugin defects; it does not claim the still-failed whole-shell resource gate passed.
+
 ## 0.1.1 — 2026-10-31 (early community pre-release)
 
 - Fix refresh starvation during continuous compositor events and retain refreshes pending during an active query.

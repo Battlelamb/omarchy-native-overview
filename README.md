@@ -4,7 +4,7 @@ Find an open window without hunting through workspaces. Type part of its title o
 
 A community plugin for the existing **Omarchy Quattro shell**, licensed GPL-3.0-only. It does not replace the shell or install a compositor plugin.
 
-**0.1.1 is an early community pre-release.** It is not an official Omarchy component or an approved marketplace listing. [Release and source archive](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.1).
+**0.1.2 is an early community pre-release with hardening fixes.** Upgrade older versions to receive the input-validation, subprocess-lifetime and stale-response fixes. It is not an official Omarchy component or an approved marketplace listing. [Release and source archive](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.2).
 
 ## What it does
 
@@ -19,7 +19,7 @@ The plugin makes no network requests, reads no clipboard content, and installs n
 
 The runtime has been exercised on **Omarchy 4.5.0rc2-1**, **Hyprland 0.56.2-4** with Lua dispatchers, the Omarchy **Quickshell 0.3.2** build, and **Qt 6.12.0**. Compatibility with other versions is not established.
 
-It imports the installed `qs.Ui`, `qs.Commons`, `Quickshell.Hyprland` and `Quickshell.Wayland` APIs. Runtime commands are `/usr/bin/hyprctl`, `/usr/bin/timeout`, and `/usr/bin/omarchy-hyprland-session-locked` (whose installed implementation uses `jq`). Node and bubblewrap are development-test dependencies, not plugin runtime dependencies.
+It imports the installed `qs.Ui`, `qs.Commons`, `Quickshell.Hyprland` and `Quickshell.Wayland` APIs. Runtime commands are `/usr/bin/hyprctl`, `/usr/bin/timeout`, `/usr/bin/bash`, `/usr/bin/head`, and `/usr/bin/omarchy-hyprland-session-locked` (whose installed implementation uses `jq`). Fixed positional-argument pipelines cap client stdout before collection at 1,048,576 bytes plus one overflow-detection byte; overflow is rejected, not published. The model independently enforces a true UTF-8 byte limit. Node and bubblewrap are development-test dependencies, not plugin runtime dependencies.
 
 ## Install
 
@@ -32,6 +32,16 @@ omarchy plugin add https://github.com/Battlelamb/omarchy-native-overview --enabl
 ```
 
 This uses Omarchy's normal plugin manager. It does not add a shortcut or overwrite your configuration. Installation and updates follow the repository's current default branch; a marketplace listing does not pin mutable HEAD to a reviewed version. Review changes before updating.
+
+## Update
+
+For an installation from the public GitHub repository, review and apply the patch with:
+
+```bash
+omarchy plugin update leviathan.native-overview
+```
+
+Back up any local modifications first. A private/local frozen git origin does not follow GitHub updates; replace that installation deliberately with a backed-up checkout from the public repository rather than moving old tags.
 
 ## Open it
 
@@ -72,10 +82,10 @@ Remove the shortcut line yourself if you added it. No custom daemon or system pa
 ## Known limitations
 
 - Search uses key-event filtering, not a full text field with caret/IME support. Accessibility and complete mouse/arrow/theme coverage remain incomplete.
-- Lock admission fails closed when Omarchy's helper is locked, unknown, missing or unsuccessful. While open, checks occur every **250 ms**, with a **2-second timeout and 1-second kill grace**. This is not instantaneous or a zero-frame privacy guarantee. The compositor's real lock is the security boundary.
+- Lock admission fails closed when Omarchy's helper is locked, unknown, missing or unsuccessful, including a process-start failure. While open, checks occur every **250 ms**. IPC requests have an inner **2-second deadline plus 1-second KILL grace**, with an independent outer **4-second / 2-second-grace fail-safe**; the inner deadline survives destruction of its QML owner. This is not instantaneous or a zero-frame privacy guarantee. The compositor's real lock is the security boundary.
 - Target-output loss and source disappearance were exercised. Two usable-display rendering, physical unplug, GPU/compositor capture denial and retained-frame stalls have not been fully verified.
 - A client lookup occurs before focus/move, but closes/address reuse or lock transitions after that lookup remain timing risks.
-- The original whole-shell resource gate failed. The reproduced descriptor spike belongs to Tailscale polling, and a Tailscale-disabled control passed. That is attribution, not proof of leak-free or low-cost operation.
+- Whole-shell resource gates have failed. The older descriptor spike was attributed to Tailscale polling and an older Tailscale-disabled control passed. In the hardening run, excess descriptors mapped to Tailscale and GPU telemetry polls, then returned to baseline. These are attributions, not green gates or proof of leak-free, isolated plugin cost.
 
 Details and measured limits are in [docs/VALIDATION.md](docs/VALIDATION.md). Do not interpret the version number, CI or a marketplace listing as a security or performance certification.
 
@@ -84,6 +94,7 @@ Details and measured limits are in [docs/VALIDATION.md](docs/VALIDATION.md). Do 
 ```bash
 omarchy plugin validate .
 bash test.sh
+bash tests/native-io.test.sh  # local Qt/offscreen release gate; needs installed qs
 python3 scripts/check-package.py
 ```
 

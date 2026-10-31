@@ -58,4 +58,74 @@ test('search and actions reach valid clients beyond the display cap', () => {
   assert.equal(model.moveRequest('0x101); bad()', 3, raw), '');
   assert.equal(model.moveRequest('0xffff', 3, raw), '');
 });
+test('reject non-string address values without coercion or exceptions', () => {
+  const addresses = [null, 123, ['0xabc'], {toString:null}, {toString:0,valueOf:0}, []];
+  let nested = ['0xabc'];
+  for (let i = 0; i < 500; i++) nested = [nested];
+  addresses.push(nested);
+  for (const address of addresses) {
+    const raw = JSON.stringify([{...windows[0], address}]);
+    assert.doesNotThrow(() => model.rows(raw, ''));
+    assert.equal(model.rows(raw, '').length, 0, 'an address must be a primitive string');
+    assert.equal(model.focusRequest('0xabc', raw), '');
+    assert.equal(model.moveRequest('0xabc', 3, raw), '');
+  }
+});
+test('reject trailing line terminators in otherwise valid addresses', () => {
+  for (const suffix of ['\n', '\r', '\r\n', '\u2028', '\u2029']) {
+    const address = '0xabc' + suffix;
+    const raw = JSON.stringify([{...windows[0], address}]);
+    assert.equal(model.rows(raw, '').length, 0, 'the entire address must match');
+    assert.equal(model.focusRequest(address, raw), '');
+    assert.equal(model.moveRequest(address, 3, raw), '');
+  }
+});
+test('enforce the input cap in UTF-8 bytes for ASCII CJK and emoji', () => {
+  const limit = 1048576;
+  const base = JSON.stringify([{...windows[0],title:''}]);
+  const budget = limit - Buffer.byteLength(base, 'utf8');
+  for (const unit of ['x', '界', '😀']) {
+    const size = Buffer.byteLength(unit, 'utf8');
+    const title = unit.repeat(Math.floor(budget / size)) + 'x'.repeat(budget % size);
+    const atLimit = JSON.stringify([{...windows[0],title}]);
+    const aboveLimit = JSON.stringify([{...windows[0],title:title+'x'}]);
+    assert.equal(Buffer.byteLength(atLimit, 'utf8'), limit);
+    assert.equal(model.rows(atLimit, '').length, 1, 'exact byte limit must remain usable');
+    assert.equal(Buffer.byteLength(aboveLimit, 'utf8'), limit + 1);
+    assert.equal(model.rows(aboveLimit, '').length, 0, 'a code-unit limit must not admit excess bytes');
+    assert.equal(model.focusRequest('0xabc', aboveLimit), '');
+    assert.equal(model.moveRequest('0xabc', 3, aboveLimit), '');
+  }
+});
+test('seeded malformed client schemas fail closed without throwing', () => {
+  let seed = 85901329;
+  function next() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed >>> 0; }
+  const addresses = ['0xabc','0xF123','0xabc;bad()',null,123,['0xabc'],{toString:null},{valueOf:null,toString:0},[]];
+  const values = [null,0,false,true,'',[],{},1,1.5,'1'];
+  for (let i = 0; i < 25000; i++) {
+    let client = {...windows[0],address:addresses[next()%addresses.length]};
+    if (next()%3 === 0) {
+      const field = ['mapped','workspace','monitor','title','class'][next()%5];
+      client[field] = field === 'workspace' ? {id:values[next()%values.length]} : values[next()%values.length];
+    }
+    const expected = client.mapped === true && typeof client.address === 'string'
+      && /^0x[0-9a-fA-F]{1,16}$/.test(client.address)
+      && client.workspace && Number.isInteger(client.workspace.id) && Number.isInteger(client.monitor)
+      && typeof client.title === 'string' && typeof client.class === 'string';
+    const raw = JSON.stringify([client]);
+    let rows;
+    assert.doesNotThrow(() => { rows = model.rows(raw, ''); });
+    assert.equal(rows.length, expected ? 1 : 0, 'seeded schema case ' + i);
+    if (!expected) assert.equal(model.focusRequest('0xabc', raw), '');
+  }
+});
+test('byte guard agrees with UTF-8 oracle across mixed and unpaired surrogates', () => {
+  for (const pattern of ['a','界','😀','\ud800','\udc00','a界😀\ud800x\udc00']) {
+    for (const units of [349525,349526,524288,1048575,1048576,1048577]) {
+      const raw = pattern.repeat(Math.ceil(units/pattern.length)).slice(0,units);
+      assert.equal(model.fitsInputLimit(raw), Buffer.byteLength(raw,'utf8') <= 1048576,
+        'UTF-8 boundary with ' + units + ' UTF-16 units');
+    }
+  }
+});
 console.log(`RESULT ${passed} passed`);
