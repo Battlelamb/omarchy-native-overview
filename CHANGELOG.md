@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 - 2026-10-31 (feature pre-release)
+
+- Search for multiple words in any order across a window's title and application name; every word must match the same window.
+- Toggle a current-workspace filter with Ctrl+Space or its native button, without moving windows or discarding the search.
+- Add a clear-search control and localized displayed-result counts, with explanatory empty states.
+- Replace the small top thumbnail with a native-themed list/preview split on wide windows and a stacked layout on smaller windows.
+- Reuse validated display clients until the raw response changes, instead of reparsing the entire response for each search edit. Focus and move still independently validate a fresh response.
+- Consolidate repeated text styling in one plain-text label component; reuse Omarchy's existing buttons and theme tokens. No new runtime package, network service or clipboard access.
+- Give runtime QML/JS/catalogue one versioned directory and update the manifest entry point, preventing stale compiled components during an in-session upgrade without duplicating code or restarting the shell.
+- Preserve the 0.1.2 process ownership, raw-output bounds, independent deadlines and fail-closed lock admission.
+
+The earlier whole-shell resource gate remains failed. Reduced parsing work is not a measured desktop speedup, memory reduction or an isolated plugin-cost benchmark. Exact execution coverage and retained failed attempts are documented in docs/VALIDATION.md.
+
 ## 0.1.2 — 2026-10-31 (hardening patch)
 
 - Reject non-string window addresses without coercion or exceptions.

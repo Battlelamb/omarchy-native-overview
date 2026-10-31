@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const cp = require('node:child_process');
 assert.equal(process.env.NATIVE_IO_SANDBOX, '1', 'use bash tests/native-io.test.sh');
 fs.mkdirSync('/tmp/runtime', {recursive:true, mode:0o700});
-let helper = fs.readFileSync('/work/BoundedProcess.qml', 'utf8');
+let helper = fs.readFileSync(require('./runtime-path.cjs')('BoundedProcess.qml'), 'utf8');
 if (process.env.NATIVE_IO_MUTATION) {
   const mutation = process.env.NATIVE_IO_MUTATION;
   const [before, after] = mutation === 'unbounded-collector'

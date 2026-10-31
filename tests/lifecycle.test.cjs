@@ -2,8 +2,8 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync(__dirname + '/../Overview.qml', 'utf8');
-const ioSource = fs.readFileSync(__dirname + '/../BoundedProcess.qml', 'utf8');
+const source = fs.readFileSync(require('./runtime-path.cjs')('Overview.qml'), 'utf8');
+const ioSource = fs.readFileSync(require('./runtime-path.cjs')('BoundedProcess.qml'), 'utf8');
 let passed = 0;
 function pass(name) { passed++; console.log('PASS ' + name); }
 function block(text, start) {
@@ -31,7 +31,7 @@ function callback(id, context) {
   return context[id + 'Done'];
 }
 const windowModel = vm.createContext({});
-vm.runInContext(fs.readFileSync(__dirname + '/../WindowModel.js', 'utf8'), windowModel);
+vm.runInContext(fs.readFileSync(require('./runtime-path.cjs')('WindowModel.js'), 'utf8'), windowModel);
 // Only native Timer/Process creation is replaced. Execute both the real Overview
 // callbacks and helper ownership methods; native signal/byte tests live separately.
 function platform(done) {
@@ -58,9 +58,9 @@ function platform(done) {
 function fixture() {
   let now = 0, deadline = null;
   const c = vm.createContext({opened:false, opening:false, raw:'[]', query:'', selected:0,
-    requestedAddress:'', requestedWorkspace:0, refreshPending:false, actionPending:false,
+    workspaceOnly:false, requestedAddress:'', requestedWorkspace:0, refreshPending:false, actionPending:false,
     actionError:'', shell:null, manifest:null, WindowModel:windowModel,
-    Hyprland:{focusedWorkspace:{id:3}}, Qt:{callLater(){}}, keyboard:{forceActiveFocus(){}},
+    Hyprland:{focusedWorkspace:{id:3}}, Qt:{callLater(){}}, keyboard:{focusCalls:0, forceActiveFocus() { this.focusCalls++; }},
     updateTimer:{running:false, start() { this.running = true; deadline = now + 80; },
       stop() { this.running = false; deadline = null; }}});
   c.root = c;
@@ -69,7 +69,20 @@ function fixture() {
   const busy = source.match(/readonly property bool actionBusy: ([^\n]+)/);
   assert.ok(busy, 'read-only progress guard missing');
   Object.defineProperty(c, 'actionBusy', {get() { return vm.runInContext(busy[1], c); }});
-  Object.defineProperty(c, 'matches', {get() { return windowModel.rows(c.raw, c.query); }});
+  // Evaluate the shipped binding expressions, not a parallel rows() implementation.
+  // QML caches clients until raw changes; model that dependency explicitly here.
+  let cachedRaw, cachedClients;
+  for (const name of ['clients', 'currentWorkspace', 'matches']) {
+    const binding = source.match(new RegExp('readonly property var ' + name + ': ([^\\n]+)'));
+    if (!binding) continue;
+    Object.defineProperty(c, name, {get() {
+      if (name !== 'clients') return vm.runInContext(binding[1], c);
+      if (cachedRaw !== c.raw) { cachedRaw = c.raw; cachedClients = vm.runInContext(binding[1], c); }
+      return cachedClients;
+    }});
+  }
+  const clamp = source.match(/onMatchesChanged: ([^\n]+)/)[1];
+  c.clampSelection = () => vm.runInContext(clamp, c);
   entry(source, 'onRawEvent', c);
   const timer = source.slice(source.indexOf('id: updateTimer'));
   const trigger = timer.match(/onTriggered: ([^\n}]+)/)[1].trim();
@@ -83,6 +96,79 @@ function fixture() {
   c.admit = function() { c.open('{}'); c.lockProbe.complete(1, 0); };
   return c;
 }
+const scoped = fixture();
+entry(source, 'toggleScope', scoped);
+scoped.admit();
+const scopedRaw = JSON.stringify([
+  {address:'0xa', mapped:true, title:'Project notes', class:'Editor', workspace:{id:3}, monitor:0},
+  {address:'0xb', mapped:true, title:'Project review', class:'Browser', workspace:{id:4}, monitor:0},
+  {address:'0xc', mapped:true, title:'Other', class:'Editor', workspace:{id:3}, monitor:0}
+]);
+scoped.refresh.complete(0, 0, scopedRaw); scoped.query = 'project'; scoped.selected = 1;
+const displayClients = scoped.clients;
+assert.equal(scoped.matches.length, 2);
+scoped.toggleScope();
+assert.equal(scoped.workspaceOnly, true); assert.equal(scoped.query, 'project'); assert.equal(scoped.selected, 0);
+assert.deepEqual(Array.from(scoped.matches, row => row.address), ['0xa']);
+assert.equal(scoped.clients, displayClients, 'search/scope must reuse validated display data');
+scoped.Hyprland.focusedWorkspace = {id:4};
+assert.deepEqual(Array.from(scoped.matches, row => row.address), ['0xb']);
+scoped.Hyprland.focusedWorkspace = null;
+assert.equal(scoped.matches.length, 0, 'unknown scoped workspace must not show every workspace');
+scoped.toggleScope(); assert.equal(scoped.matches.length, 2); assert.equal(scoped.query, 'project');
+scoped.workspaceOnly = true; scoped.selected = 200; scoped.clampSelection(); assert.equal(scoped.selected, 0);
+scoped.workspaceOnly = false; scoped.selected = 200; scoped.clampSelection(); assert.equal(scoped.selected, 1);
+scoped.query = 'missing'; scoped.clampSelection(); assert.equal(scoped.selected, 0);
+pass('scope toggles preserve query, follow focused workspace, reuse clients and clamp selection');
+scoped.close(); assert.equal(scoped.workspaceOnly, false);
+scoped.workspaceOnly = true; scoped.open('{}'); assert.equal(scoped.workspaceOnly, false);
+pass('open and close reset workspace scope');
+function keyHandler(c) {
+  Object.assign(c.Qt, {Key_Escape:1, Key_M:2, Key_Return:3, Key_Enter:4, Key_Down:5,
+    Key_Up:6, Key_Space:7, Key_W:8, ControlModifier:1, AltModifier:2, MetaModifier:4});
+  c.results = {positionViewAtIndex() {}}; c.ListView = {Contain:0};
+  c.Util = {editsFilter() { return false; }};
+  entry(source, 'toggleScope', c);
+  const start = source.indexOf('Keys.onPressed: function(event)');
+  assert.ok(start >= 0, 'actual key handler missing');
+  vm.runInContext('handleKey = function(event) ' + block(source, start), c);
+  return (key, modifiers=0, text='') => {
+    const event = {key, modifiers, text, accepted:false}; c.handleKey(event); return event;
+  };
+}
+const keyed = fixture(); keyed.admit(); keyed.refresh.complete(0, 0, scopedRaw);
+const key = keyHandler(keyed); keyed.query = 'project'; keyed.selected = 1;
+assert.equal(key(keyed.Qt.Key_Space, keyed.Qt.ControlModifier, ' ').accepted, true);
+assert.equal(keyed.workspaceOnly, true); assert.equal(keyed.query, 'project'); assert.equal(keyed.selected, 0);
+key(keyed.Qt.Key_Space, keyed.Qt.ControlModifier, ' '); assert.equal(keyed.workspaceOnly, false);
+assert.equal(key(keyed.Qt.Key_W, keyed.Qt.ControlModifier).accepted, false, 'Ctrl+W is not a scope shortcut');
+assert.equal(key(keyed.Qt.Key_Space, keyed.Qt.AltModifier, ' ').accepted, false);
+key(100, 0, ' '); assert.equal(keyed.query, 'project ');
+keyed.query = 'x'.repeat(256); key(100, 0, 'more'); assert.equal(keyed.query.length, 256);
+keyed.Util = {editsFilter() { return true; }, editedFilter(event, query) { return query.slice(0, -1); }};
+key(100, keyed.Qt.ControlModifier); assert.equal(keyed.query.length, 255, 'existing native edit delegate remains reachable');
+pass('actual Ctrl+Space key handler toggles scope without stealing edit keys or exceeding query cap');
+entry(source, 'clearSearch', keyed);
+keyed.workspaceOnly = true; keyed.query = 'project'; keyed.selected = 1;
+const focusBeforeClear = keyed.keyboard.focusCalls;
+keyed.clearSearch();
+assert.equal(keyed.query, ''); assert.equal(keyed.selected, 0); assert.equal(keyed.workspaceOnly, true);
+assert.equal(keyed.keyboard.focusCalls, focusBeforeClear + 1);
+keyed.clearSearch(); assert.equal(keyed.query, ''); assert.equal(keyed.selected, 0);
+pass('clear search resets query and selection, preserves scope and returns keyboard focus');
+for (const [id, method] of [['scopeButton', 'toggleScope'], ['clearButton', 'clearSearch']]) {
+  const at = source.indexOf('id: ' + id); assert.ok(at >= 0, id + ' clickable control missing');
+  const click = source.indexOf('onClicked:', at);
+  assert.ok(click >= 0, id + ' click handler missing');
+  const handler = block(source, click);
+  keyed.workspaceOnly = false; keyed.query = 'project'; keyed.selected = 1;
+  const focusBeforeClick = keyed.keyboard.focusCalls;
+  vm.runInContext(handler, keyed);
+  assert.equal(keyed.selected, 0); assert.equal(keyed.keyboard.focusCalls, focusBeforeClick + 1);
+  assert.equal(keyed.workspaceOnly, method === 'toggleScope');
+  assert.equal(keyed.query, method === 'clearSearch' ? '' : 'project');
+}
+pass('actual scope and clear click handlers reach the tested functions and restore keyboard focus');
 const c = fixture();
 c.open('{}');
 assert.equal(c.opened, false); assert.equal(c.refresh.running, false);
@@ -227,9 +313,26 @@ for (const [code,status] of [[0,0],[1,0],[0,1]]) {
   d.verify.complete(0,0,fresh); d.focusAction.complete(1,0,'rejected');
 }
 pass('cancelled normal nonzero abnormal verification cannot mutate a new active verification');
-const catalogue = JSON.parse(fs.readFileSync(__dirname + '/../i18n/en.json', 'utf8'));
+const catalogue = JSON.parse(fs.readFileSync(require('./runtime-path.cjs')('i18n/en.json'), 'utf8'));
 for (const key of ['actionFailed', 'actionStartFailed']) assert.ok(catalogue[key]?.length);
 assert.match(source, /textFormat: Text.PlainText\s+text: root.actionError \? strings.t\(root.actionError\)/);
 assert.match(source, /interval: 250; repeat: true; running: root.opened/);
 pass('failure footer uses live translated plain text and retains open lock polling');
+const countStart = source.indexOf('id: resultCount');
+assert.ok(countStart >= 0, 'displayed result count label missing');
+const countExpression = source.slice(countStart).match(/\n\s*text: ([^\n]+)/)[1];
+for (const n of [0, 1, 256]) {
+  let pluralCount, formattedCount;
+  const binding = vm.createContext({root:{matches:Array(n)},
+    strings:{tn(key, count) {
+      pluralCount = count;
+      const value = catalogue[key]; assert.ok(value && typeof value === 'object', 'CLDR forms required');
+      assert.ok(value.one && value.other, 'one/other forms required');
+      return {arg(number) { return value[count === 1 ? 'one' : 'other'].replace('%1', number); }};
+    }}, Commons:{I18n:{formatNumber(count) { formattedCount = count; return '[' + count + ']'; }}}});
+  assert.equal(vm.runInContext(countExpression, binding), `[${n}] ${n === 1 ? 'result' : 'results'} shown`);
+  assert.equal(pluralCount, n); assert.equal(formattedCount, n);
+}
+pass('count binding uses displayed matches, CLDR forms and the native number formatter');
 console.log(`RESULT ${passed} passed`);
+require('./ui.test.cjs');

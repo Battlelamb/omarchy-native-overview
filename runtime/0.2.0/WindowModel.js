@@ -32,10 +32,16 @@ function validClients(raw) {
         return {address:c.address, title:c.title.slice(0, 512), app:c.class.slice(0, 128), workspace:c.workspace.id, monitor:c.monitor};
     });
 }
-function rows(raw, query) {
-    var needle = String(query || "").slice(0, 256).toLowerCase();
-    return validClients(raw).filter(function(c) {
-        return (c.title + " " + c.app).toLowerCase().indexOf(needle) !== -1;
+function rows(raw, query, workspace) {
+    return filterRows(validClients(raw), query, workspace);
+}
+function filterRows(clients, query, workspace) {
+    if (workspace !== undefined && !Number.isInteger(workspace)) return [];
+    var words = String(query || "").slice(0, 256).toLowerCase().trim().split(/\s+/);
+    return clients.filter(function(c) {
+        if (workspace !== undefined && c.workspace !== workspace) return false;
+        var text = (c.title + " " + c.app).toLowerCase();
+        return words.every(function(word) { return text.indexOf(word) !== -1; });
     }).slice(0, 256);
 }
 function focusRequest(address, raw) {

@@ -8,11 +8,11 @@ A keyboard-first window finder for the **Omarchy Quattro shell**. Search your op
 
 [Quick start](#quick-start) · [Controls](#controls) · [Updates](#updates) · [Compatibility](#compatibility) · [Troubleshooting](#troubleshooting) · [Known limits](#safety-and-known-limits)
 
-![Native Overview 0.1.2 finding two Foot terminal windows across workspaces, with a live preview of the selected project-notes window and keyboard hints.](docs/images/window-search.png)
+![Native Overview 0.2.0 finding two Foot terminal windows across workspaces, with a live preview of the selected project-notes window and keyboard hints.](docs/images/window-search.png)
 
-*Real 0.1.2 capture in an isolated Hyprland session. The terminals contain sample notes, not private desktop content. [Image provenance](docs/images/README.md).*
+*Real 0.2.0 capture in an isolated Hyprland session. The terminals contain sample notes, not private desktop content. [Image provenance](docs/images/README.md).*
 
-**Current release: [0.1.2](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.1.2)** · Early community pre-release · [GPL-3.0-only](LICENSE)
+**Current release: [0.2.0](https://github.com/Battlelamb/omarchy-native-overview/releases/tag/v0.2.0)** · Early community pre-release · [GPL-3.0-only](LICENSE)
 
 Built for the shell you already use. No replacement shell, compositor plugin, background daemon or package installer is bundled. This is an independent community project, not an official Omarchy component.
 
@@ -39,6 +39,22 @@ This works with **existing windows**. It does not launch applications, display a
 ![After Ctrl+M, the project-notes window has moved from workspace 1 to workspace 3; both search results now belong to workspace 3.](docs/images/bring-here.png)
 
 The screenshot was taken after a real Ctrl+M action and reopening the overview. The selected window moved; the viewing workspace stayed at 3.
+
+</details>
+
+## Search less, see more
+
+- **Match words in any order.** `FOOT notes` finds an application named `foot` with `notes` in its title. Every word must match the same window.
+- **Narrow the list without moving anything.** Click **Current workspace** or press <kbd>Ctrl</kbd> + <kbd>Space</kbd>. The query stays intact.
+- **Clear without losing scope.** Click the search field's **×** button. Closing and reopening resets both the query and the workspace filter.
+- **Inspect at a useful size.** Wide windows put the list beside a larger preview; smaller windows stack them and wrap the footer.
+
+<details>
+<summary>See the current-workspace filter</summary>
+
+![Current workspace enabled in Native Overview 0.2.0: the same FOOT notes query now shows only the release-notes terminal on workspace 3.](docs/images/workspace-filter.png)
+
+The filter changes the list, not the windows' workspaces. The count reports displayed results, not an uncapped total.
 
 </details>
 
@@ -101,14 +117,16 @@ These controls apply while the overview has keyboard focus.
 
 | Key or action | Result |
 |---|---|
-| Type | Filter titles and application names, case-insensitively. |
+| Type | Match every search word across titles and application names, case-insensitively. |
 | <kbd>↑</kbd> / <kbd>↓</kbd> | Select a result. |
 | <kbd>Enter</kbd> or click a result | Focus the selected window. |
 | <kbd>Ctrl</kbd> + <kbd>M</kbd> | Bring the selected window to the current workspace. |
+| <kbd>Ctrl</kbd> + <kbd>Space</kbd> or Current workspace | Toggle the current-workspace filter without clearing the query. |
+| Click **×** | Clear the query and keep the current scope. |
 | <kbd>Backspace</kbd> | Edit the search. |
 | <kbd>Esc</kbd> or click outside the card | Close the overview. |
 
-Search is substring matching, not fuzzy matching. Closing clears the query/window state and releases the preview component. If an action fails, the overview keeps your search and shows retry feedback rather than claiming success.
+Each word uses substring matching, not fuzzy matching. Search edits reuse validated display data; focus/move still re-read fresh clients. Closing clears the query, scope and window state and releases the preview component. If an action fails, the overview keeps your search and shows retry feedback rather than claiming success.
 
 ## Updates
 
@@ -118,7 +136,7 @@ For installations from the public GitHub repository:
 omarchy plugin update leviathan.native-overview
 ```
 
-Back up local modifications before updating. **0.1.2 is recommended over 0.1.0 and 0.1.1:** it fixes malformed-input handling, retired responses affecting later sessions, lock-check startup recovery and subprocess lifetime/output bounds.
+Back up local modifications before updating. The runtime uses a versioned path so a rescan cannot silently reuse the older flat-path QML component. **0.2.0 adds the new layout, multi-word search, workspace filter and clear control.** It retains the 0.1.2 malformed-input, retired-response, lock-startup and subprocess-lifetime hardening. Existing shortcuts stay unchanged.
 
 Installation and updates follow the repository's current default branch. A marketplace entry does not pin mutable HEAD to an immutable reviewed release.
 
@@ -151,7 +169,7 @@ Remove your optional shortcut separately. There is no custom daemon, system pack
 
 ## Compatibility
 
-These versions were exercised for 0.1.2. Other combinations are **not established as compatible**.
+These versions were exercised for 0.2.0. Other combinations are **not established as compatible**.
 
 | Component | Exercised version |
 |---|---|
@@ -236,15 +254,16 @@ Keep errors visible. Do not restart the long-lived, lock-hosting shell just to h
 [Component CI](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml) checks JavaScript behavior and package layout. It does **not** render Omarchy or certify GPU behavior.
 
 <details>
-<summary>0.1.2 execution summary and local development commands</summary>
+<summary>0.2.0 execution summary and local development commands</summary>
 
 | Check | Recorded result |
 |---|---|
-| Component suites | 10 model + 22 lifecycle checks passed. |
+| Component suites | 13 model + 28 lifecycle + 3 UI-contract groups passed. |
 | Native offscreen Qt/Quickshell | 18 checks passed. |
-| Visible nested desktop | 38 passed, 1 resource-gate failure, retained as failed. |
-| Preview soak | 300 paced cycles with balanced preview destruction. |
-| Upgrade and rollback | 12 checks passed in the isolated upgrade session. |
+| Nested core exercise | 12 passed; 2 unusable headless-mode setup failures retained separately, not counted as responsive coverage. |
+| Responsive layouts | 5 checks passed at actual 800×600 and 480×360 sizes, booting an isolated shell at each size. |
+| Preview soak | 40 paced cycles; 44 preview creations/44 destructions across the core exercise. |
+| Upgrade and rollback | 12 checks passed: actual 0.1.2→0.2.0 reload, failed-clone rollback and preserved settings. |
 
 These are scoped observations, not a blanket security/performance certification. The native checks were run locally, separately from hosted component CI. [Detailed evidence and limits](docs/VALIDATION.md).
 
@@ -265,10 +284,10 @@ The native runner uses an offline bubblewrap sandbox and Qt's offscreen/software
 
 | File | Responsibility |
 |---|---|
-| [`Overview.qml`](Overview.qml) | Search UI, selection, refresh scheduling and action lifecycle. |
-| [`WindowPreview.qml`](WindowPreview.qml) | Selected-window capture and unavailable-content fallback. |
-| [`BoundedProcess.qml`](BoundedProcess.qml) | Per-request ownership, raw-output caps and process supervision. |
-| [`WindowModel.js`](WindowModel.js) | Strict input validation, filtering and bounded focus/move requests. |
+| [`Overview.qml`](runtime/0.2.0/Overview.qml) | Search UI, selection, refresh scheduling and action lifecycle. |
+| [`WindowPreview.qml`](runtime/0.2.0/WindowPreview.qml) | Selected-window capture and unavailable-content fallback. |
+| [`BoundedProcess.qml`](runtime/0.2.0/BoundedProcess.qml) | Per-request ownership, raw-output caps and process supervision. |
+| [`WindowModel.js`](runtime/0.2.0/WindowModel.js) | Strict input validation, filtering and bounded focus/move requests. |
 | [`tests/`](tests/) | Component regressions and native subprocess checks. |
 
 Small, focused fixes and compatibility reports are welcome. Include versions and a minimal reproduction, not private window titles, unrelated logs or desktop data. Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing larger changes.

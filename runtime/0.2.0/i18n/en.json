@@ -1,0 +1,20 @@
+{
+  "title": "Windows",
+  "search": "Search windows and applications…",
+  "clearSearch": "Clear search",
+  "currentWorkspace": "Current workspace",
+  "scopeHint": "Ctrl+Space to toggle",
+  "workspaceBadge": "WS %1",
+  "preview": "Selected window · live preview",
+  "compactPreview": "Preview · %1 · workspace %2",
+  "selectWindow": "Select a window to inspect",
+  "emptyHint": "Try fewer words or a different application.",
+  "emptyScopedHint": "Try fewer words or turn off Current workspace.",
+  "detail": "%1 · workspace %2",
+  "previewUnavailable": "Preview unavailable",
+  "empty": "No matching windows",
+  "results": {"one": "%1 result shown", "other": "%1 results shown"},
+  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Esc close",
+  "actionFailed": "Window action failed. Press Enter to retry or Esc to close.",
+  "actionStartFailed": "Could not start hyprctl. Check its installation, then retry."
+}

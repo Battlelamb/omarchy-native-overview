@@ -2,8 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const path = require('node:path');
-const source = path.join(__dirname, '../WindowModel.js');
+const source = require('./runtime-path.cjs')('WindowModel.js');
 assert.ok(fs.existsSync(source), 'window-list model is not implemented');
 const model = vm.createContext({});
 vm.runInContext(fs.readFileSync(source, 'utf8').replace(/^\.pragma library\s*/, ''), model);
@@ -126,6 +125,44 @@ test('byte guard agrees with UTF-8 oracle across mixed and unpaired surrogates',
       assert.equal(model.fitsInputLimit(raw), Buffer.byteLength(raw,'utf8') <= 1048576,
         'UTF-8 boundary with ' + units + ' UTF-16 units');
     }
+  }
+});
+test('match every search word across title and app regardless of word order', () => {
+  const raw = JSON.stringify(windows);
+  for (const query of ['editor notes', 'NOTES editor', '  editor   notes  ']) {
+    assert.equal(model.rows(raw, query)[0]?.address, '0xabc', query);
+  }
+  assert.equal(model.rows(raw, 'editor output').length, 0, 'every word must match the same window');
+  assert.equal(model.rows(raw, '   ').length, 2, 'whitespace-only query shows mapped windows');
+});
+test('scope search to an exact workspace before applying the display cap', () => {
+  const raw = JSON.stringify(windows);
+  assert.equal(model.rows(raw, '', 1).map(x => x.address).join(','), '0xabc');
+  assert.equal(model.rows(raw, 'terminal', 6)[0]?.address, '0xdef');
+  assert.equal(model.rows(raw, 'terminal', 1).length, 0);
+  assert.equal(model.rows(raw, '', undefined).length, 2, 'unscoped behavior is preserved');
+  for (const scope of [null, '1', NaN, Infinity, 1.5, {}])
+    assert.equal(model.rows(raw, '', scope).length, 0, 'invalid scope fails closed');
+  const clients = Array.from({length:257}, (_, i) => ({...windows[0], address:'0x'+(i+1).toString(16), workspace:{id:i===256?6:1}}));
+  assert.equal(model.rows(JSON.stringify(clients), '', 6)[0]?.address, '0x101');
+});
+test('reuse a validated display snapshot across search edits without reparsing JSON', () => {
+  assert.equal(typeof model.filterRows, 'function', 'validated-snapshot filter missing');
+  const raw = JSON.stringify(windows);
+  const clients = model.validClients(raw);
+  vm.runInContext('var parseCount=0; var originalParse=JSON.parse; JSON.parse=function(text) {parseCount++; return originalParse(text);}', model);
+  try {
+    for (const query of ['', 'editor notes', 'output', '  ']) {
+      const expected = query.trim() === 'output' ? '0xdef' : query.trim() === 'editor notes' ? '0xabc' : '0xabc,0xdef';
+      assert.equal(model.filterRows(clients, query).map(x=>x.address).join(','), expected);
+    }
+    assert.equal(model.filterRows(clients, '', 6)[0]?.address, '0xdef');
+    assert.equal(model.parseCount, 0, 'query-only filtering must not call JSON.parse');
+    assert.equal(model.filterRows([], '').length, 0, 'empty snapshot clears visible rows');
+    assert.equal(model.focusRequest('0xabc', JSON.stringify([windows[1]])), '', 'actions still revalidate fresh raw membership');
+    assert.equal(model.parseCount, 1, 'action authorization must independently parse its fresh response');
+  } finally {
+    vm.runInContext('JSON.parse=originalParse', model);
   }
 });
 console.log(`RESULT ${passed} passed`);
