@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "author": "Ömer Eren",
   "license": "GPL-3.0-only",
-  "description": "Find windows, preview the selected window, focus it or bring it to the current workspace.",
+  "description": "Find the window you lost across workspaces. Search by app or title, preview it live, then press Enter to jump there or Ctrl+M to bring it here. Ctrl+Space filters the current workspace; the clear button resets your search. Match multiple words in any order. Open: omarchy-shell shell toggle leviathan.native-overview '{}'. Runs inside Omarchy Quattro. No shortcut is installed automatically. Finds existing windows, not apps to launch.",
   "kinds": ["overlay"],
   "keepLoaded": true,
   "entryPoints": { "overlay": "runtime/0.2.0/Overview.qml" }

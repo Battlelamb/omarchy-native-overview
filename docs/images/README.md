@@ -10,6 +10,8 @@ Real **Native Overview 0.2.0 candidate** captures, not HTML recreations.
 
 Captured on 2026-10-31 in an isolated, no-network nested Hyprland session using the actual Omarchy shell. Foot terminals contain harmless sample notes, not private desktop documents.
 
+The repository-root `preview.png` supplies the marketplace preview. It is a metadata-stripped copy of `window-search.png`, with identical decoded RGBA pixels and dimensions. Its SHA-256 is `eaed1a4eec1ed6b3bc8e2518241cf859d326f911be195aa1ae138914ed763410`.
+
 These 1000×580 native-card crops were made before the packaging-only move into the versioned runtime directory. The QML, JavaScript and catalogue bytes are identical to the final locations listed below. The changed manifest/loader was separately exercised by a real running-shell upgrade; that assertion initially failed before the versioned path fix and then passed. The images are not retroactive evidence of that earlier loader run.
 
 No interface elements were drawn, retouched, blurred or recolored. Only cropping and PNG encoding were applied. Full frames, private process/configuration logs and installation receipts do not ship in the public repository.
