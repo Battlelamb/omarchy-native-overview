@@ -7,6 +7,7 @@ import qs.Ui
 import qs.Commons
 import qs.Commons as Commons
 import "WindowModel.js" as WindowModel
+import "Options.js" as Options
 
 Item {
     id: root
@@ -14,9 +15,15 @@ Item {
     property var manifest: null
     property bool opened: false
     property bool opening: false
+    property bool admissionReady: false
     property string raw: "[]"
     property string query: ""
     property bool workspaceOnly: false
+    property var options: Options.defaults()
+    property bool configuring: false
+    property string preferenceVerb: ""
+    property string preferenceStatus: ""
+    readonly property string preferencesPath: decodeURIComponent(Qt.resolvedUrl("settings.py").toString().replace(/^file:\/\//, ""))
     property int selected: 0
     property string requestedAddress: ""
     property int requestedWorkspace: 0
@@ -26,18 +33,42 @@ Item {
     readonly property bool actionBusy: requestedAddress !== "" || verify.running || focusAction.running || actionPending
     readonly property var clients: WindowModel.validClients(raw)
     readonly property var currentWorkspace: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : NaN
-    readonly property var matches: WindowModel.filterRows(clients, query, workspaceOnly ? currentWorkspace : undefined)
+    readonly property var matches: WindowModel.filterRows(clients, query, workspaceOnly ? currentWorkspace : undefined, options.sortOrder)
     onMatchesChanged: selected = Math.max(0, Math.min(selected, matches.length - 1))
 
+    function featureRevision() { return "0.3.0"; }
+    function configure() {
+        if (!opened || actionBusy || preferenceIO.running) return;
+        configuring = true;
+        settings.reload();
+        settings.focusFirst();
+    }
+    function backToCommand() {
+        if (preferenceIO.running) return;
+        settings.closePopups();
+        configuring = false;
+        keyboard.forceActiveFocus();
+    }
+    function requestPreferences(verb, value) {
+        if (preferenceIO.running) return;
+        var argv = Options.command(preferencesPath, verb, value);
+        if (!argv) return;
+        preferenceVerb = verb; preferenceStatus = "";
+        preferenceIO.command = argv;
+        preferenceIO.start();
+    }
     function open(payloadJson) {
         if (opened || opening) return;
-        query = ""; selected = 0; workspaceOnly = false; raw = "[]"; opening = true;
+        query = ""; selected = 0; workspaceOnly = false; raw = "[]"; configuring = false; opening = true;
+        options = Options.defaults(); admissionReady = false;
         lockProbe.start();
     }
     function close() {
-        opening = false;
+        opening = false; admissionReady = false;
         opened = false; raw = "[]"; query = ""; workspaceOnly = false; requestedAddress = ""; requestedWorkspace = 0;
         actionPending = false; actionError = "";
+        configuring = false; settings.closePopups(); preferenceVerb = ""; preferenceStatus = "";
+        preferenceIO.cancel();
         refreshPending = false; updateTimer.stop();
         lockProbe.cancel(); refresh.cancel(); verify.cancel(); focusAction.cancel();
     }
@@ -55,7 +86,7 @@ Item {
         keyboard.forceActiveFocus();
     }
     function activate(index, bringHere) {
-        if (!opened || opening || lockProbe.running || index < 0 || index >= matches.length || actionBusy) return;
+        if (!opened || configuring || opening || lockProbe.running || index < 0 || index >= matches.length || actionBusy) return;
         if (bringHere && (!Hyprland.focusedWorkspace || Hyprland.focusedWorkspace.id < 1)) return;
         requestedAddress = matches[index].address;
         requestedWorkspace = bringHere ? Hyprland.focusedWorkspace.id : 0;
@@ -93,9 +124,30 @@ Item {
             if (!root.opening && !root.opened) return;
             if (error || code !== 1 || status !== 0) { root.dismiss(); return; }
             if (root.opening) {
+                if (!root.admissionReady) { root.requestPreferences("read"); return; }
                 root.opening = false; root.opened = true;
                 refresh.start();
                 Qt.callLater(function() { if (root.opened) keyboard.forceActiveFocus(); });
+            }
+        }
+    }
+    BoundedProcess {
+        id: preferenceIO
+        byteLimit: 16384
+        onCompleted: (code, status, text, error) => {
+            if (!root.opening && !root.opened) return;
+            var next = !error && code === 0 && status === 0 ? Options.decode(text) : null;
+            var verb = root.preferenceVerb;
+            root.preferenceVerb = "";
+            root.preferenceStatus = next ? (verb === "read" ? "" : "settingsSaved") : "settingsFailed";
+            if (next) {
+                root.options = next;
+                root.workspaceOnly = next.defaultScope === "current";
+                root.selected = 0;
+            }
+            if (root.opening) {
+                root.admissionReady = true;
+                lockProbe.start();
             }
         }
     }
@@ -163,6 +215,7 @@ Item {
             id: card
             objectName: "overview-card"
             readonly property bool compact: height < Style.space(440)
+            readonly property bool tight: height < Style.space(260)
             anchors.centerIn: parent
             width: Math.min(Style.space(1000), panel.width - Style.space(32))
             height: Math.min(Style.space(580), panel.height - Style.space(32))
@@ -176,9 +229,11 @@ Item {
             Item {
                 id: keyboard
                 anchors.fill: parent
+                enabled: !root.configuring
                 focus: true
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Escape) root.dismiss();
+                    else if (event.key === Qt.Key_Comma && event.modifiers === Qt.ControlModifier) root.configure();
                     else if (event.key === Qt.Key_Space && event.modifiers === Qt.ControlModifier) root.toggleScope();
                     else if (event.key === Qt.Key_M && (event.modifiers & Qt.ControlModifier)) root.activate(root.selected, true);
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) root.activate(root.selected);
@@ -193,13 +248,15 @@ Item {
             }
             Item {
                 id: content
+                visible: !root.configuring
                 anchors.fill: parent
                 anchors.margins: card.compact ? Style.space(12) : Style.space(20)
                 readonly property int gap: card.compact ? Style.space(8) : Style.space(12)
                 Item {
                     id: heading
                     width: parent.width
-                    height: Math.max(titleLabel.implicitHeight, resultCount.implicitHeight)
+                    visible: !card.tight
+                    height: visible ? Math.max(titleLabel.implicitHeight, resultCount.implicitHeight) : 0
                     Label {
                         id: titleLabel
                         anchors.left: parent.left
@@ -222,7 +279,7 @@ Item {
                 Rectangle {
                     id: searchField
                     anchors.top: heading.bottom
-                    anchors.topMargin: content.gap
+                    anchors.topMargin: heading.visible ? content.gap : 0
                     width: parent.width
                     height: Math.max(Style.space(42), searchLabel.implicitHeight + Style.space(20))
                     radius: Style.cornerRadius
@@ -266,9 +323,10 @@ Item {
                     anchors.top: searchField.bottom
                     anchors.topMargin: content.gap
                     width: parent.width
-                    height: scopeButton.implicitHeight
+                    height: Math.max(scopeButton.implicitHeight, configureButton.implicitHeight)
                     Button {
                         id: scopeButton
+                        focusable: true
                         objectName: "overview-scope"
                         anchors.left: parent.left
                         width: Math.min(implicitWidth, parent.width)
@@ -290,16 +348,33 @@ Item {
                     Label {
                         anchors.left: scopeButton.right
                         anchors.leftMargin: content.gap
-                        anchors.right: parent.right
+                        anchors.right: configureButton.left
+                        anchors.rightMargin: content.gap
                         anchors.verticalCenter: parent.verticalCenter
                         text: strings.t("scopeHint")
                         font.pixelSize: Style.font.bodySmall
                         opacity: 0.6
                     }
+                    Button {
+                        id: configureButton
+                        objectName: "overview-configure"
+                        anchors.right: parent.right
+                        text: strings.t("configure")
+                        focusable: true
+                        bordered: true
+                        enabled: !root.actionBusy && !preferenceIO.running
+                        foreground: Commons.Color.menu.text
+                        fontFamily: Style.font.menuFamily
+                        Accessible.name: strings.t("configure")
+                        Accessible.role: Accessible.Button
+                        Accessible.onPressAction: root.configure()
+                        onClicked: root.configure()
+                    }
                 }
                 Item {
                     id: body
                     readonly property bool wide: width >= Style.space(760)
+                    readonly property bool showPreview: root.options.thumbnails && (wide || height >= Style.space(180))
                     anchors.top: scopeRow.bottom
                     anchors.topMargin: content.gap
                     width: parent.width
@@ -307,10 +382,10 @@ Item {
                     Item {
                         id: resultsPane
                         anchors.left: parent.left
-                        anchors.top: body.wide ? parent.top : previewPane.bottom
-                        anchors.topMargin: body.wide ? 0 : content.gap
+                        anchors.top: body.wide || !body.showPreview ? parent.top : previewPane.bottom
+                        anchors.topMargin: body.wide || !body.showPreview ? 0 : content.gap
                         anchors.bottom: parent.bottom
-                        width: body.wide ? Math.floor((parent.width - content.gap) * 0.44) : parent.width
+                        width: body.wide && body.showPreview ? Math.floor((parent.width - content.gap) * 0.44) : parent.width
                         ListView {
                             id: results
                             objectName: "overview-results"
@@ -321,6 +396,7 @@ Item {
                             boundsBehavior: Flickable.StopAtBounds
                             delegate: Rectangle {
                                 id: row
+                                objectName: "overview-result-row"
                                 required property var modelData
                                 required property int index
                                 readonly property bool chosen: index === root.selected
@@ -354,6 +430,7 @@ Item {
                                 }
                                 Column {
                                     id: rowText
+                                    objectName: "overview-row-text"
                                     anchors.left: parent.left
                                     anchors.leftMargin: Style.space(10)
                                     anchors.right: workspacePill.left
@@ -405,6 +482,7 @@ Item {
                     }
                     Rectangle {
                         id: previewPane
+                        visible: body.showPreview
                         objectName: "overview-preview"
                         readonly property var selectedRow: root.matches[root.selected] || null
                         anchors.top: parent.top
@@ -436,7 +514,7 @@ Item {
                             anchors.top: previewHeading.bottom
                             anchors.margins: Style.space(10)
                             height: Math.max(0, previewMetadata.y - y - Style.space(10))
-                            active: root.opened && root.matches.length > 0
+                            active: root.opened && !root.configuring && body.showPreview && root.matches.length > 0
                             sourceComponent: WindowPreview {
                                 address: root.matches[root.selected] ? root.matches[root.selected].address : ""
                                 opened: root.opened
@@ -470,14 +548,28 @@ Item {
                 }
                 Label {
                     id: footer
+                    objectName: "overview-footer"
                     anchors.bottom: parent.bottom
                     width: parent.width
                     textFormat: Text.PlainText
-                    text: root.actionError ? strings.t(root.actionError) : strings.t("help")
+                    text: root.actionError ? strings.t(root.actionError) : root.preferenceStatus === "settingsFailed" ? strings.t("settingsFailed") : strings.t(card.tight ? "compactHelp" : "help")
                     wrapMode: Text.WordWrap
                     elide: Text.ElideNone
                     opacity: root.actionError ? 1 : 0.65
                 }
+            }
+            Settings {
+                id: settings
+                anchors.fill: parent
+                anchors.margins: card.compact ? Style.space(12) : Style.space(20)
+                visible: root.configuring
+                enabled: root.configuring
+                options: root.options
+                busy: preferenceIO.running
+                status: root.preferenceStatus ? strings.t(root.preferenceStatus) : ""
+                onSaveRequested: value => root.requestPreferences("save", value)
+                onResetRequested: root.requestPreferences("reset")
+                onBackRequested: root.backToCommand()
             }
         }
     }

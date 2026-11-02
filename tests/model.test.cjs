@@ -165,4 +165,20 @@ test('reuse a validated display snapshot across search edits without reparsing J
     vm.runInContext('JSON.parse=originalParse', model);
   }
 });
+test('sort name/workspace deterministically before the display cap without mutating membership', () => {
+  const clients = model.validClients(JSON.stringify([
+    {...windows[0], address:'0x1', class:'Zulu', title:'B', workspace:{id:9}},
+    {...windows[0], address:'0x2', class:'alpha', title:'A', workspace:{id:2}},
+    {...windows[0], address:'0x3', class:'Alpha', title:'A', workspace:{id:2}},
+    {...windows[0], address:'0x4', class:'Beta', title:'C', workspace:{id:-1}}
+  ]));
+  const ids = rows => rows.map(c=>c.address).join(',');
+  assert.equal(ids(model.filterRows(clients, '', undefined, 'name')), '0x2,0x3,0x4,0x1');
+  assert.equal(ids(model.filterRows(clients, '', undefined, 'workspace')), '0x4,0x2,0x3,0x1');
+  assert.equal(ids(model.filterRows(clients, '', undefined, 'existing')), '0x1,0x2,0x3,0x4');
+  assert.equal(ids(clients), '0x1,0x2,0x3,0x4');
+  const many = Array.from({length:257}, (_,i)=>({...clients[0],title:i===256?'A':'Z'}));
+  assert.equal(model.filterRows(many, '', undefined, 'name')[0].title, 'A');
+  assert.equal(model.filterRows(many, '', undefined, 'name').length, 256);
+});
 console.log(`RESULT ${passed} passed`);

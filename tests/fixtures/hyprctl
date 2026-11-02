@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-only
+import json
+import pathlib
+import sys
+
+with pathlib.Path('/tmp/actions.log').open('a') as out:
+    out.write(json.dumps(sys.argv[1:]) + '\n')
+if sys.argv[1:] == ['clients', '-j']:
+    print(json.dumps([
+        {'address':'0x1','mapped':True,'title':'Planning notes — <b>literal</b>','class':'Zulu','workspace':{'id':4},'monitor':0},
+        {'address':'0x2','mapped':True,'title':'Review queue','class':'Alpha','workspace':{'id':3},'monitor':0},
+        {'address':'0x3','mapped':True,'title':'Review queue','class':'Alpha','workspace':{'id':3},'monitor':0}]))
+else:
+    print('{}')

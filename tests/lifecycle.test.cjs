@@ -30,6 +30,8 @@ function callback(id, context) {
   vm.runInContext(id + 'Done = ' + source.slice(handler + 'onCompleted:'.length, body) + block(source, body), context);
   return context[id + 'Done'];
 }
+const optionModel = vm.createContext({});
+vm.runInContext(fs.readFileSync(require('./runtime-path.cjs')('Options.js'), 'utf8'), optionModel);
 const windowModel = vm.createContext({});
 vm.runInContext(fs.readFileSync(require('./runtime-path.cjs')('WindowModel.js'), 'utf8'), windowModel);
 // Only native Timer/Process creation is replaced. Execute both the real Overview
@@ -58,14 +60,25 @@ function platform(done) {
 function fixture() {
   let now = 0, deadline = null;
   const c = vm.createContext({opened:false, opening:false, raw:'[]', query:'', selected:0,
-    workspaceOnly:false, requestedAddress:'', requestedWorkspace:0, refreshPending:false, actionPending:false,
-    actionError:'', shell:null, manifest:null, WindowModel:windowModel,
+    workspaceOnly:false, admissionReady:false, requestedAddress:'', requestedWorkspace:0, refreshPending:false, actionPending:false,
+    actionError:'', shell:null, manifest:null, WindowModel:windowModel, Options:optionModel,
+    options:optionModel.defaults(), configuring:false, preferenceVerb:'', preferenceStatus:'', preferencesPath:'/runtime/settings.py',
+    settings:{closePopups(){},reload(){},focusFirst(){}},
     Hyprland:{focusedWorkspace:{id:3}}, Qt:{callLater(){}}, keyboard:{focusCalls:0, forceActiveFocus() { this.focusCalls++; }},
     updateTimer:{running:false, start() { this.running = true; deadline = now + 80; },
       stop() { this.running = false; deadline = null; }}});
   c.root = c;
-  for (const name of ['open', 'close', 'dismiss', 'activate', 'queueRefresh', 'runRefresh', 'finishAction']) entry(source, name, c);
-  for (const id of ['lockProbe', 'refresh', 'verify', 'focusAction']) c[id] = platform(callback(id, c));
+  for (const name of ['open', 'close', 'dismiss', 'activate', 'queueRefresh', 'runRefresh', 'finishAction', 'requestPreferences', 'configure', 'backToCommand']) entry(source, name, c);
+  for (const id of ['lockProbe', 'refresh', 'verify', 'focusAction', 'preferenceIO']) c[id] = platform(callback(id, c));
+  c.autoPreferences = true;
+  const lockComplete = c.lockProbe.complete;
+  c.lockProbe.complete = function(...args) {
+    lockComplete(...args);
+    if (c.autoPreferences && c.preferenceIO.running) {
+      c.preferenceIO.complete(0,0,JSON.stringify({ok:true,options:c.options}));
+      if (c.lockProbe.running) c.lockProbe.complete(1,0);
+    }
+  };
   const busy = source.match(/readonly property bool actionBusy: ([^\n]+)/);
   assert.ok(busy, 'read-only progress guard missing');
   Object.defineProperty(c, 'actionBusy', {get() { return vm.runInContext(busy[1], c); }});
@@ -334,5 +347,30 @@ for (const n of [0, 1, 256]) {
   assert.equal(pluralCount, n); assert.equal(formattedCount, n);
 }
 pass('count binding uses displayed matches, CLDR forms and the native number formatter');
+const pref = fixture(); pref.autoPreferences = false;
+pref.open('{}'); pref.lockProbe.complete(1,0);
+assert.equal(pref.opened,false); assert.equal(pref.preferenceIO.running,true); assert.equal(pref.refresh.running,false);
+const oldPrefs = pref.preferenceIO.current;
+pref.close(); assert.equal(oldPrefs.stopRequested,true);
+pref.open('{}'); pref.lockProbe.complete(1,0);
+const newPrefs = pref.preferenceIO.current;
+pref.preferenceIO.complete(0,0,JSON.stringify({ok:true,options:{defaultScope:'current',sortOrder:'name',thumbnails:false}}),'',oldPrefs);
+assert.equal(pref.opened,false);assert.equal(pref.preferenceIO.current,newPrefs);
+pref.preferenceIO.complete(0,0,JSON.stringify({ok:true,options:{defaultScope:'current',sortOrder:'name',thumbnails:false}}));
+assert.equal(pref.opened,false);assert.equal(pref.lockProbe.running,true);
+pref.lockProbe.complete(1,0);
+assert.equal(pref.opened,true);assert.equal(pref.workspaceOnly,true);assert.equal(pref.options.thumbnails,false);
+pref.refresh.complete(0,0,scopedRaw);pref.configure();pref.activate(0,false);
+assert.equal(pref.configuring,true);assert.equal(pref.verify.running,false);
+pref.requestPreferences('save',{defaultScope:'all',sortOrder:'workspace',thumbnails:true});
+pref.preferenceIO.complete(1,0,'{"ok":false}');
+assert.equal(pref.options.thumbnails,false);assert.equal(pref.preferenceStatus,'settingsFailed');
+pref.requestPreferences('reset');
+pref.preferenceIO.complete(0,0,JSON.stringify({ok:true,options:optionModel.defaults()}));
+assert.equal(pref.options.thumbnails,true);assert.equal(pref.workspaceOnly,false);
+pref.backToCommand();assert.equal(pref.configuring,false);assert.equal(pref.query,'');
+pref.close();pref.open('{}');pref.lockProbe.complete(1,0);pref.preferenceIO.complete(127,0,'');pref.lockProbe.complete(1,0);
+assert.equal(pref.opened,true);assert.equal(pref.preferenceStatus,'settingsFailed');assert.equal(pref.options.sortOrder,'existing');
+pass('saved options load before mapping; cancellation, Configure action exclusion, failed save and Reset preserve safe state');
 console.log(`RESULT ${passed} passed`);
 require('./ui.test.cjs');

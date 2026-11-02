@@ -14,7 +14,11 @@
   "previewUnavailable": "Preview unavailable",
   "empty": "No matching windows",
   "results": {"one": "%1 result shown", "other": "%1 results shown"},
-  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Esc close",
+  "compactHelp": "↑ ↓ · Enter focus · Ctrl+M · Esc",
+  "configure": "Configure",
+  "settingsSaved": "Overview settings saved.",
+  "settingsFailed": "Cannot read or save settings. Check the private preferences file, then retry.",
+  "help": "Enter focus · Ctrl+M bring here · ↑ ↓ select · Ctrl+, Configure · Esc close",
   "actionFailed": "Window action failed. Press Enter to retry or Esc to close.",
   "actionStartFailed": "Could not start hyprctl. Check its installation, then retry."
 }

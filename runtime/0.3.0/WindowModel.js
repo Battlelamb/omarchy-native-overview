@@ -35,14 +35,24 @@ function validClients(raw) {
 function rows(raw, query, workspace) {
     return filterRows(validClients(raw), query, workspace);
 }
-function filterRows(clients, query, workspace) {
+function filterRows(clients, query, workspace, sortOrder) {
     if (workspace !== undefined && !Number.isInteger(workspace)) return [];
     var words = String(query || "").slice(0, 256).toLowerCase().trim().split(/\s+/);
-    return clients.filter(function(c) {
+    var filtered = clients.filter(function(c) {
         if (workspace !== undefined && c.workspace !== workspace) return false;
         var text = (c.title + " " + c.app).toLowerCase();
         return words.every(function(word) { return text.indexOf(word) !== -1; });
-    }).slice(0, 256);
+    });
+    if (sortOrder === "name" || sortOrder === "workspace") {
+        filtered = filtered.map(function(row, index) { return {row:row, index:index}; }).sort(function(a, b) {
+            if (sortOrder === "workspace" && a.row.workspace !== b.row.workspace) return a.row.workspace - b.row.workspace;
+            var left = a.row.app.toLowerCase(), right = b.row.app.toLowerCase();
+            if (left !== right) return left < right ? -1 : 1;
+            left = a.row.title.toLowerCase(); right = b.row.title.toLowerCase();
+            return left === right ? a.index - b.index : left < right ? -1 : 1;
+        }).map(function(item) { return item.row; });
+    }
+    return filtered.slice(0, 256);
 }
 function focusRequest(address, raw) {
     var found = validClients(raw).some(function(c) { return c.address === address; });

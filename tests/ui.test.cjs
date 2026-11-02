@@ -48,7 +48,7 @@ assert.match(section('footer'), /anchors.bottom: parent.bottom/);
 assert.match(section('footer'), /wrapMode: Text.WordWrap/);
 assert.match(body, /footer.y - y/);
 const loader = section('previewLoader');
-assert.match(loader, /active: root.opened && root.matches.length > 0/);
+assert.match(loader, /active: root.opened && !root.configuring && body.showPreview && root.matches.length > 0/);
 for (const metadataY of [12, 100]) {
   const height = value(loader, 'height', {previewMetadata:{y:metadataY}, y:32, Style:{space:n => n}});
   assert.equal(height, Math.max(0, metadataY - 42), 'short previews never request a negative capture size');

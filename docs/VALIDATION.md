@@ -1,8 +1,37 @@
 # Validation and limits
 
+## Final 0.3.0 offline verification
+
+The parent reran the shipped `env -u PYTHONPATH bash test.sh`: **62 unique named checks plus five Python preference tests, 67 total**, reconciled against all six footer groups. The earlier 52-count parser receipt remains preserved as an undercount, not a failed test suite. The hosted workflow now explicitly runs the preference-store tests as well; local checks do not establish hosted execution.
+
+Independently reviewed feature coverage also includes **18 native subprocess cases** and **four private native settings scenarios / 176 assertions**: saved scope, stable sort, thumbnail visibility, options-only Reset, reopened readback and contained focused controls. These software-rendered fixture checks do not qualify live capture/dispatch, physical outputs or full-shell upgrade/rollback. Production and scoped metadata reviews passed; this is not a full security audit. Entries below referring to 0.2.0 preview files describe the checkpoint before their replacements.
+
+Runtime inventory SHA-256: `ba60cc884bb52527c3677f66cbe3a9f1a808882fb10279ab418e7a004f4baeb6` (sorted compact JSON of relative runtime paths to SHA-256 values). Runtime bytes match the fresh standalone-suite receipt. Browse/Configure previews are exact-source native Qt renders of illustrative metadata, not live user windows or action proof.
+
+**No installation, shell restart or live configuration change was performed this round.** Still unqualified: real-shell old/new/rollback and live actions, GPU, lock races, RTL/IME/accessibility, hotplug and longer isolated resources. The historical whole-shell resource failure stays failed. Hosted CI must be read on the exact pushed commit in Actions, separately from this local record. Source publication is not a stable release or marketplace promotion.
+
+## Historical checkpoints
+
+The following records describe their original versions and publication/install observations, not newer-candidate coverage.
+
 These are observed checks, not a security audit or a supported-platform matrix. Historical receipts live outside the public source tree so private process/configuration traces do not ship with the plugin.
 
-## 0.2.0 feature validation
+## Earlier 0.3.0 local checkpoint (before refreshed previews)
+
+The 0.3.0 source starts from public `0ccd31a7ea38bdba72eeeb11f7b88e7e873b013f`. No installed/public checkout was changed, and no commit, push, shell reload/restart or package installation was performed for these checks.
+
+- Offline `bash test.sh`: **1 option-schema + 14 model + 29 lifecycle + 3 UI-contract groups**, **5 Python preference tests**, **11 missing-dependency negative controls**, **4 package-layout groups** passed. The Python cases include ordinary pre-existing ancestor permissions, no write-on-read, private stores, invalid/duplicate payloads, corrupt/symlink refusal, options-only Reset, atomic-replace failure, legacy read/new-write budgets and six concurrent locked updates. The reused preference helper is byte-identical to the GPL Glyph Picker 0.3.0 donor.
+- `bash tests/native-io.test.sh`: **18 actual native Qt/Quickshell subprocess cases** passed with the unchanged process helper and its independent deadlines. This is not compositor action proof.
+- Private native `bash tests/native-overview.test.sh <owned-output>`: **4 scenarios**, each with **44 observed native assertions**, passed at 1280×720/12px, 480×360/12px, 800×600/18px and 480×360/18px. Actual keyboard input opens Configure, selects native dropdown values, toggles thumbnails, saves through the real Python helper, leaves/reopens, reads the saved options back and resets through the native button. All three settings controls are reached and fully contained when focused, including scrolled large-font compact views. Closed preview/timer/helper ownership and zero window dispatches are checked.
+- Captures are real native Qt renderings of fixture metadata, not real user windows or 0.3.0 public demonstration images. The private harness replaces the shell's output-selection facade and Hyprland metadata/lock responses, imports actual installed native controls/tokens, uses private labwc/software rendering and never mounts host sockets, real HOME, clipboard or user preferences. At very short/large-font sizes the command view omits its heading/preview and settings require scrolling; this is not simultaneous visibility of every setting.
+- Genuine RED receipts cover missing sorting, missing saved-option/helper behavior, delayed read/lock readmission, package dependency omissions, compact large-font result starvation and focused-settings clipping. Failed harness attempts remain failed: early key pacing did not open Configure, and an initial nominal “tall font” run was invalidated because the host theme reset it to 12px. Final runs assert the actual requested font token after asynchronous startup.
+- A source-valid native mutation removing thumbnail visibility gating was **rejected** by `disabled thumbnails never capture`; the canonical source was not modified by that test.
+
+The software fixture logs contain expected unavailable-Hyprland, no-GL/dmabuf-to-SHM fallback and private Wayland text-input focus warnings. No QML reference/type/layout-recursion/binding-loop warnings were accepted. These warnings are not claimed fixed or hidden, and no GPU qualification follows from them.
+
+**Not established:** a real 0.2.0→0.3.0 full-shell upgrade/rollback, live dispatch/preview capture, live keybinding integration, hosted CI on this candidate, full accessibility/IME, physical hotplug or improved whole-shell resources. The historical failed whole-shell resource gate below stays failed. Historical preview files remain 0.2.0. Local fixture evidence does not promote the candidate or change the installed version.
+
+## 0.2.0 feature validation (historical)
 
 The candidate retains the hardening mechanisms from 0.1.2. Its changes are multi-word AND search, optional current-workspace filtering, clear/count controls, a native split/stacked layout and display-only validated-client reuse. Action verification still fetches and validates a fresh uncapped membership response; cached display clients never authorize actions.
 

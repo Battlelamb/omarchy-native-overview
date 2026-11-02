@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — development/testing source snapshot
+
+- Native secondary Configure page with saved all/current default scope, existing/name/workspace order, thumbnail visibility and explicit options-only Reset.
+- Reuse the GPL bounded private preference helper outside the installed runtime. No saved window addresses or new window-action backend.
+- Sort filtered results stably before the display cap; fresh focus/bring-here membership checks stay independent.
+- Release capture in Configure, with thumbnails off and in very short layouts; reserve readable real-font list/settings geometry and keyboard-scroll focused settings controls.
+- Versioned 0.3.0 runtime and literal `featureRevision()` readback method; existing Super+D remains unchanged.
+- Ship standalone option/store/package-dependency and private native Qt keyboard/persistence/layout regressions, with preference-store tests included in hosted CI. Refresh illustrative Browse/Configure previews; historical failed gates remain labeled.
+
+No installed upgrade, live/full-shell upgrade/rollback, GPU capture qualification or performance improvement is claimed. Source publication and exact-commit hosted CI are recorded separately; neither constitutes a stable release.
+
 ## 0.2.0 - 2026-10-31 (feature pre-release)
 
 - Search for multiple words in any order across a window's title and application name; every word must match the same window.
