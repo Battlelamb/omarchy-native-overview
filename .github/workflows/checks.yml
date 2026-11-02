@@ -22,9 +22,13 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y bubblewrap
           fi
+          # Namespace root cannot traverse the runner-owned private checkout.
+          source=$(sudo mktemp -d /tmp/overview-store-ci.XXXXXX)
+          trap 'sudo rm -rf -- "$source"' EXIT
+          sudo cp -r runtime tests manifest.json "$source/"
           sudo bwrap --unshare-all --die-with-parent --new-session --clearenv \
             --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 \
-            --proc /proc --dev /dev --tmpfs /tmp --ro-bind "$PWD" /work \
+            --proc /proc --dev /dev --tmpfs /tmp --ro-bind "$source" /work \
             --chdir /work --setenv HOME /tmp --setenv PATH /usr/bin \
             --setenv OVERVIEW_SANDBOX 1 --setenv PYTHONDONTWRITEBYTECODE 1 \
             /usr/bin/python3 -m unittest discover -s tests -p "test_*.py" -v
