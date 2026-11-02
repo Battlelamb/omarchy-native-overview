@@ -16,8 +16,18 @@ jobs:
           persist-credentials: false
       - name: Saved option validation
         run: node tests/settings.test.cjs
-      - name: Saved preference store
-        run: python3 -m unittest discover -s tests -p "test_*.py" -v
+      - name: Saved preference store (offline sandbox)
+        run: |
+          if ! command -v bwrap >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y bubblewrap
+          fi
+          sudo bwrap --unshare-all --die-with-parent --new-session --clearenv \
+            --ro-bind /usr /usr --ro-bind /lib /lib --ro-bind /lib64 /lib64 \
+            --proc /proc --dev /dev --tmpfs /tmp --ro-bind "$PWD" /work \
+            --chdir /work --setenv HOME /tmp --setenv PATH /usr/bin \
+            --setenv OVERVIEW_SANDBOX 1 --setenv PYTHONDONTWRITEBYTECODE 1 \
+            /usr/bin/python3 -m unittest discover -s tests -p "test_*.py" -v
       - name: Window model
         run: node tests/model.test.cjs
       - name: Admission lifecycle
