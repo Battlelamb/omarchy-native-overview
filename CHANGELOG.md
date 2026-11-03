@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - public identity and update compatibility
+
+- Use the public `battlelamb.native-overview` plugin ID and Battlelamb author identity.
+- Move the runtime to a fresh versioned path, including its revision readback and tests.
+- Keep the preference store and options unchanged; existing menu/binding references require a coordinated namespace migration.
+- Replace internal workstation and release-process notes with concise public validation and compatibility guidance. Required source attribution and public history are preserved.
+
 ## 0.3.0 — development/testing source snapshot
 
 - Native secondary Configure page with saved all/current default scope, existing/name/workspace order, thumbnail visibility and explicit options-only Reset.

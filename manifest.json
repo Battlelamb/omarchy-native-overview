@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "id": "leviathan.native-overview",
+  "id": "battlelamb.native-overview",
   "name": "Native Overview",
-  "version": "0.3.0",
-  "author": "Ömer Eren",
+  "version": "0.3.1",
+  "author": "Battlelamb",
   "license": "GPL-3.0-only",
-  "description": "Find existing windows across workspaces. Search app/title words; Enter focuses, Ctrl+M brings the selection here, Ctrl+Space filters this workspace. Configure (Ctrl+,) saves default scope, stable name/workspace order and thumbnail visibility; Reset restores Overview options only. Open: omarchy-shell shell toggle leviathan.native-overview '{}'. Requires Omarchy Quattro. Existing Super+D stays unchanged; no keys are installed automatically.",
+  "description": "Find existing windows across workspaces. Search app/title words; Enter focuses, Ctrl+M brings the selection here, Ctrl+Space filters this workspace. Configure (Ctrl+,) saves default scope, stable name/workspace order and thumbnail visibility; Reset restores Overview options only. Open: omarchy-shell shell toggle battlelamb.native-overview '{}'. Requires Omarchy Quattro. Existing Super+D stays unchanged; no keys are installed automatically.",
   "kinds": [
     "overlay"
   ],
   "keepLoaded": true,
   "entryPoints": {
-    "overlay": "runtime/0.3.0/Overview.qml"
+    "overlay": "runtime/0.3.1/Overview.qml"
   }
 }

@@ -4,7 +4,7 @@ Native Overview is distributed under GPL-3.0-only. See LICENSE for the full lice
 
 ## Selected-window preview
 
-`runtime/0.3.0/WindowPreview.qml` adapts the lifecycle-bound `ScreencopyView` fragment from end-4/dots-hyprland, `dots/.config/quickshell/ii/modules/ii/overview/OverviewWindow.qml` lines 93–97 at commit `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`.
+`runtime/0.3.1/WindowPreview.qml` adapts the lifecycle-bound `ScreencopyView` fragment from end-4/dots-hyprland, `dots/.config/quickshell/ii/modules/ii/overview/OverviewWindow.qml` lines 93–97 at commit `2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8`.
 
 Source: https://github.com/end-4/dots-hyprland/tree/2f2a376fdb2ad738bf55f693dd0b474b64bb0ab8
 
@@ -12,11 +12,11 @@ Copyright end-4 and contributors. The adapted code remains GPL-3.0-only; the att
 
 ## Private saved options
 
-`runtime/0.3.0/preferences.py` is reused byte-for-byte from our GPL-3.0-only Glyph Picker 0.3.0 source, public baseline `946b367750ad76d1dff8a3dad3a1248cbb09fd06`, `runtime/0.3.0/preferences.py`. `Settings.qml` follows that package's native settings composition but exposes only Overview's three options. No installed shared service or nine-plugin runtime dependency is introduced.
+`runtime/0.3.1/preferences.py` is reused byte-for-byte from our GPL-3.0-only Glyph Picker 0.3.0 source, public baseline `946b367750ad76d1dff8a3dad3a1248cbb09fd06`, `runtime/0.3.0/preferences.py`. `Settings.qml` follows that package's native settings composition but exposes only Overview's three options. No installed shared service or nine-plugin runtime dependency is introduced.
 
 ## Native integration
 
-`runtime/0.3.0/Overview.qml`, `runtime/0.3.0/WindowModel.js` and tests are local integration code distributed as part of this GPL package. The implementation imports the installed Omarchy `qs.Ui.OverlayWindow` and `qs.Commons` theme/translation/filter APIs. The built-in emoji overlay and OverlayWindow were read to follow the existing plugin contract; Omarchy source is neither modified nor vendored here.
+`runtime/0.3.1/Overview.qml`, `runtime/0.3.1/WindowModel.js` and tests are local integration code distributed as part of this GPL package. The implementation imports the installed Omarchy `qs.Ui.OverlayWindow` and `qs.Commons` theme/translation/filter APIs. The built-in emoji overlay and OverlayWindow were read to follow the existing plugin contract; Omarchy source is neither modified nor vendored here.
 
 No Hyprspace, hy3, dynamic-cursors, Pyprland, Vicinae or wl-mirror source is included. Workspace grouping and drag/drop are not implemented. This is an independent community plugin, not an official Omarchy component. Marketplace verification is tied to its recorded snapshot, not every later release.
 

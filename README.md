@@ -2,7 +2,7 @@
 
 **Find the window. Keep your place.** Search existing windows by title or application, inspect the selected window, then jump to it or bring it to the workspace you're using.
 
-**0.3.0 development/testing source snapshot — not a stable release.** Adds native saved settings without changing your Super+D binding. Independent community plugin for Omarchy's Quattro shell, not a replacement shell or an official Omarchy component.
+**0.3.1 development/testing source snapshot, not a stable release.** Uses a public plugin identity and a fresh runtime URL. Independent community plugin for Omarchy's Quattro shell, not a replacement shell or an official Omarchy component.
 
 [Controls](#controls) · [Configure](#configure) · [Install and open](#install-and-open) · [Updates](#updates) · [Safety](#safety-and-limits) · [Tests](#validation-and-development)
 
@@ -69,30 +69,32 @@ Requires Omarchy Quattro, its native UI components and Hyprland Lua dispatchers.
 
 ```bash
 omarchy plugin add https://github.com/Battlelamb/omarchy-native-overview --enable
-omarchy-shell shell toggle leviathan.native-overview '{}'
+omarchy-shell shell toggle battlelamb.native-overview '{}'
 ```
 
 Start typing, select with the arrows, then Enter or Ctrl+M. Keep an existing **Super+D** binding: this plugin neither installs nor changes keybindings. Review source and native installation confirmations; plugins execute with your user permissions inside the shell.
 
 ## Updates
 
-For an installation tracking the public repository:
+For an installation already using `battlelamb.native-overview` and tracking the public repository:
 
 ```bash
-omarchy plugin update leviathan.native-overview
+omarchy plugin update battlelamb.native-overview
 ```
 
-Back up local modifications first. The 0.3.0 entry point uses `runtime/0.3.0/`, rather than reusing 0.2.0's QML URL. Preferences are outside that tree, so replacing runtime source does not remove saved options. The root remains loaded while enabled for lifecycle ownership, but plugin timers/helpers are stopped while closed. `featureRevision()` returns the literal `0.3.0` for future loader readback; the manifest alone does not prove which component is running.
+**Namespace migration:** an installation under an older plugin ID must have its checkout, enabled state and menu/shortcut references migrated together. The normal update command does not rename plugin IDs. Back up the old checkout and preserve the stable preference path above; adding the new ID alone can leave duplicate installations. Existing Super+D bindings need their target updated without changing the key itself.
 
-**A real 0.2.0→0.3.0 full-shell upgrade/rollback has not been qualified in this round.** Do not restart the lock-hosting shell just to conceal an IPC/rescan failure. A failed update reply can follow a completed filesystem operation; inspect the installed checkout/state before retrying. Frozen local origins do not automatically track public GitHub updates. Existing tags and historical receipts remain unchanged.
+The new entry point uses `runtime/0.3.1/`. Preferences stay outside that tree. `featureRevision()` returns `0.3.1` to identify the running component; the manifest alone is not sufficient. Closed timers/helpers remain stopped while the root retains lifecycle ownership.
+
+**Full current-version real-shell upgrade/rollback is not qualified by source or component tests.** Retain a rollback copy and inspect installed state after an IPC failure; do not restart the shell merely to hide stale loading. Existing public tags and history remain unchanged.
 
 Disable or remove deliberately:
 
 ```bash
-omarchy-shell shell hide leviathan.native-overview
-omarchy plugin disable leviathan.native-overview
+omarchy-shell shell hide battlelamb.native-overview
+omarchy plugin disable battlelamb.native-overview
 # Save local source edits before deleting the checkout:
-omarchy plugin remove leviathan.native-overview --yes
+omarchy plugin remove battlelamb.native-overview --yes
 ```
 
 Preferences remain outside the checkout. Remove an optional binding separately.
@@ -135,18 +137,18 @@ python3 scripts/check-package.py
 
 The native Overview runner starts a **private headless labwc inside offline bubblewrap**, drives actual native Qt controls with private Wayland key input, saves/reloads/resets real files under fake HOME, captures rendered fixture UI, and checks wide/compact/large-font geometry and closed helpers. It never binds host sockets or the user's settings. `labwc`, `wtype`, existing Omarchy/Qt and fonts are needed locally. Settings can require scrolling at large font/small height. No synthetic fixture capture is a public real-window demo.
 
-Local results and source-specific limits are in [VALIDATION](docs/VALIDATION.md). The hosted workflow is component-only; check [Actions](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml) on the exact commit for hosted results. Current previews are illustrative native component renders. No desktop speedup, memory reduction, stable release or installation is claimed.
+Local results and source-specific limits are in [VALIDATION](docs/VALIDATION.md). The hosted workflow is component-only; check [Actions](https://github.com/Battlelamb/omarchy-native-overview/actions/workflows/checks.yml) on the exact commit for hosted results. Current previews are illustrative native component renders. Screenshots and component checks alone do not establish a desktop speedup, memory reduction, stable release or complete installation qualification.
 
 ### Source map
 
 | Runtime file | Responsibility |
 |---|---|
-| [Overview.qml](runtime/0.3.0/Overview.qml) | Command/Configure composition, admission, selection and action lifecycle. |
-| [Settings.qml](runtime/0.3.0/Settings.qml), [Options.js](runtime/0.3.0/Options.js) | Native typed options editor and strict wire/verb checks. |
-| [settings.py](runtime/0.3.0/settings.py), [preferences.py](runtime/0.3.0/preferences.py) | Settings-only CLI and bounded private atomic store. |
-| [WindowModel.js](runtime/0.3.0/WindowModel.js) | Fresh validation, filtering, stable sorting and bounded action requests. |
-| [WindowPreview.qml](runtime/0.3.0/WindowPreview.qml) | Lifecycle-bound selected-window capture/fallback. |
-| [BoundedProcess.qml](runtime/0.3.0/BoundedProcess.qml) | Per-request ownership, output caps and process deadlines. |
+| [Overview.qml](runtime/0.3.1/Overview.qml) | Command/Configure composition, admission, selection and action lifecycle. |
+| [Settings.qml](runtime/0.3.1/Settings.qml), [Options.js](runtime/0.3.1/Options.js) | Native typed options editor and strict wire/verb checks. |
+| [settings.py](runtime/0.3.1/settings.py), [preferences.py](runtime/0.3.1/preferences.py) | Settings-only CLI and bounded private atomic store. |
+| [WindowModel.js](runtime/0.3.1/WindowModel.js) | Fresh validation, filtering, stable sorting and bounded action requests. |
+| [WindowPreview.qml](runtime/0.3.1/WindowPreview.qml) | Lifecycle-bound selected-window capture/fallback. |
+| [BoundedProcess.qml](runtime/0.3.1/BoundedProcess.qml) | Per-request ownership, output caps and process deadlines. |
 
 ## Credits and licence
 

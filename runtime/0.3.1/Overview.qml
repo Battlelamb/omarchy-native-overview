@@ -36,7 +36,7 @@ Item {
     readonly property var matches: WindowModel.filterRows(clients, query, workspaceOnly ? currentWorkspace : undefined, options.sortOrder)
     onMatchesChanged: selected = Math.max(0, Math.min(selected, matches.length - 1))
 
-    function featureRevision() { return "0.3.0"; }
+    function featureRevision() { return "0.3.1"; }
     function configure() {
         if (!opened || actionBusy || preferenceIO.running) return;
         configuring = true;

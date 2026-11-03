@@ -7,8 +7,9 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / 'manifest.json').read_text())
 assert manifest['schemaVersion'] == 1
-assert manifest['id'] == 'leviathan.native-overview'
-assert manifest['version'] == '0.3.0'
+assert manifest['id'] == 'battlelamb.native-overview'
+assert manifest['version'] == '0.3.1'
+assert manifest['author'] == 'Battlelamb'
 assert manifest['license'] == 'GPL-3.0-only'
 assert manifest['kinds'] == ['overlay']
 assert manifest['entryPoints'] == {'overlay': 'runtime/' + manifest['version'] + '/Overview.qml'}

@@ -123,7 +123,7 @@ ShellRoot {
    ticks++;if(ticks>160) {console.log("FAIL native scenario watchdog stage="+h.stage);Qt.exit(1);}
    if(view.configuring) h.settingsGeometry();
    if(h.stage===0 && view.opened && view.matches.length===3) {
-    h.check(typeof view.featureRevision==="function" && view.featureRevision()==="0.3.0","featureRevision literal");
+    h.check(typeof view.featureRevision==="function" && view.featureRevision()==="0.3.1","featureRevision literal");
     h.layout();h.shot("command");h.stage=1;console.log("READY configure");
    } else if(h.stage===1 && view.configuring) {
     h.check(!h.find(view.proofPanel.contentItem,"overview-preview-loader").active,"Configure releases preview");

@@ -34,4 +34,4 @@ Runtime files (SHA-256):
 
 The native runtime is copied unchanged except the disclosed surface/facade/introspection adaptation. The private renderer records the adapted QML, fixture values and full invocation separately; those files are not public package dependencies. Use the shipped test runners for reproducible component and behavior checks.
 
-The Native Overview v0.3.0 capture is independent of the shared Panel UI-1 fix. Its native toolbar translation is “Windows”; the outside caption uses the manifest’s full plugin name, “Native Overview”.
+These historical 0.3.0 images show illustrative native components, not a current-version live desktop or action confirmation. Versioned runtime updates do not change their recorded capture inputs or original font/component rights.
